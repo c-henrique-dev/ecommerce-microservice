@@ -34,7 +34,7 @@ public class ProductController {
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     @PreAuthorize("hasAnyRole('ADMIN')")
-    public Product save(@RequestBody @Schema(description = "Details of the product to create") @Valid ProductDto productDto) {
+    public Product save(@RequestBody @Valid ProductDto productDto) {
         return this.productService.save(productDto);
     }
 
