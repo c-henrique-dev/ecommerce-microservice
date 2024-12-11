@@ -40,16 +40,14 @@ public class ProductService {
                         p.setName(updateProductDto.getName());
                     }
                     if (updateProductDto.getQtd() != null) {
-                        if (updateProductDto.getQtd() != null) {
-                            p.setQtd(updateProductDto.getQtd());
-                        }
-                        if (updateProductDto.getDescription() != null) {
-                            p.setDescription(updateProductDto.getDescription());
-                        }
+                        p.setQtd(updateProductDto.getQtd());
+                    }
+                    if (updateProductDto.getDescription() != null) {
+                        p.setDescription(updateProductDto.getDescription());
+                    }
 
-                        if (updateProductDto.getPrice() != null) {
-                            p.setPrice(updateProductDto.getPrice());
-                        }
+                    if (updateProductDto.getPrice() != null) {
+                        p.setPrice(updateProductDto.getPrice());
                     }
                     productRepository.save(p);
                     return p;
