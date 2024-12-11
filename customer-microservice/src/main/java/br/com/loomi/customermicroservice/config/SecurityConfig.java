@@ -35,7 +35,8 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.POST, "/customer").permitAll()
                         .requestMatchers(HttpMethod.GET, "/customer/{email}").permitAll()
                         .requestMatchers(HttpMethod.GET, "/customer/get/{email}").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/customer/confirm").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/customer/mail/confirm").permitAll()
+                        .requestMatchers("/actuator/**").permitAll()
                         .anyRequest().authenticated())
                 .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class)
                 .build();
