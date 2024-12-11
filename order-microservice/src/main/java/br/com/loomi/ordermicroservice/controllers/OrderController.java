@@ -71,6 +71,7 @@ public class OrderController {
     )
     @PatchMapping("/{orderId}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
+    @PreAuthorize("hasAnyRole('CUSTOMER', 'ADMIN')")
     public void updateOrderStatus(
             @Parameter(description = "Order ID to update the status", required = true)
             @PathVariable UUID orderId,

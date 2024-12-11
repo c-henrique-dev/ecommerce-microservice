@@ -6,6 +6,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.UUID;
@@ -26,6 +27,7 @@ public class CartController {
             description = "Returns the shopping cart associated with the provided customer ID"
     )
     @GetMapping("/{customerId}")
+    @PreAuthorize("hasAnyRole('CUSTOMER', 'ADMIN')")
     public ResponseEntity<Cart> getCart(
             @Parameter(description = "Customer ID to retrieve the shopping cart", required = true)
             @PathVariable UUID customerId) {
@@ -39,6 +41,7 @@ public class CartController {
             description = "Adds a specified product to the customer's shopping cart with the given quantity"
     )
     @PostMapping("{customerId}")
+    @PreAuthorize("hasAnyRole('CUSTOMER', 'ADMIN')")
     public ResponseEntity<Cart> addToCart(
             @Parameter(description = "Customer ID to add the product to the cart", required = true)
             @PathVariable UUID customerId,
@@ -58,6 +61,7 @@ public class CartController {
             description = "Removes a specified product from the customer's shopping cart"
     )
     @DeleteMapping("{customerId}")
+    @PreAuthorize("hasAnyRole('CUSTOMER', 'ADMIN')")
     public ResponseEntity<Cart> removeFromCart(
             @Parameter(description = "Customer ID from which the product will be removed", required = true)
             @PathVariable UUID customerId,
@@ -65,7 +69,7 @@ public class CartController {
             @Parameter(description = "Product ID to remove from the shopping cart", required = true)
             @RequestParam UUID productId) {
 
-        Cart updatedCart = cartService.removeFromCart(customerId, productId);
+        Cart updatedCart = cartService.removeItemFromCart(customerId, productId);
         return ResponseEntity.ok(updatedCart);
     }
 }

@@ -7,6 +7,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Map;
@@ -28,6 +29,7 @@ public class PaymentController {
             description = "This endpoint simulates payment for an order. If successful, debits stock and updates the order status to RECEIVED; otherwise, updates the status to PREPARATION."
     )
     @PostMapping("{orderId}")
+    @PreAuthorize("hasAnyRole('CUSTOMER', 'ADMIN')")
     public ResponseEntity<Map> simulatePayment(
             @PathVariable @Parameter(description = "Order identifier for payment") UUID orderId) throws JsonProcessingException {
         return paymentService.simulatePayment(orderId);
