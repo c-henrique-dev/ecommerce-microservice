@@ -3,10 +3,12 @@ package br.com.loomi.reportmicroservice.services;
 import br.com.loomi.reportmicroservice.clients.OrderClient;
 import br.com.loomi.reportmicroservice.exceptions.NotFoundException;
 import br.com.loomi.reportmicroservice.models.dtos.OrderWithProductDTO;
+import br.com.loomi.reportmicroservice.models.dtos.ResponseDto;
 import br.com.loomi.reportmicroservice.models.entities.Report;
 import br.com.loomi.reportmicroservice.repositories.ReportRepository;
 import br.com.loomi.reportmicroservice.utils.ByteArrayMultipartFile;
 import feign.FeignException;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -17,7 +19,9 @@ import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @Service
 public class ReportService {
@@ -32,7 +36,7 @@ public class ReportService {
         this.reportRepository = reportRepository;
     }
 
-    public String generateReport(LocalDate initialDate, LocalDate endDate) throws IOException {
+    public ResponseEntity<ResponseDto> generateReport(LocalDate initialDate, LocalDate endDate) throws IOException {
         try {
             List<OrderWithProductDTO> orders = orderClient.getOrdersByPeriod(initialDate, endDate).getBody();
 
@@ -64,14 +68,13 @@ public class ReportService {
             report.setCreatedAt(LocalDateTime.now());
             reportRepository.save(report);
 
-            return minioFileName;
+            return ResponseEntity.ok(new ResponseDto("http://localhost:9000/report/" + report.getFilePath()));
         } catch (IOException e) {
             throw new RuntimeException("Error generating and sending the report to MinIO");
 
         } catch (FeignException f) {
             String content = f.contentUTF8();
             String message = content.replaceAll(".*\"message\":\"(.*?)\".*", "$1");
-            System.out.println("AQUI");
             System.out.println(f.contentUTF8());
             System.out.println(f.getMessage());
             throw new NotFoundException(message);
