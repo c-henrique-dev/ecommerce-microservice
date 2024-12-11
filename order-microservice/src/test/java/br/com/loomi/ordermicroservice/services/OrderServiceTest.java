@@ -1,6 +1,5 @@
 package br.com.loomi.ordermicroservice.services;
 
-import br.com.loomi.ordermicroservice.clients.ProductClient;
 import br.com.loomi.ordermicroservice.models.entities.Cart;
 import br.com.loomi.ordermicroservice.models.entities.CartItem;
 import br.com.loomi.ordermicroservice.models.entities.Order;
@@ -32,7 +31,7 @@ public class OrderServiceTest {
     private OrderRepository orderRepository;
 
     @Mock
-    private ProductClient productClient;
+    private CartService cartService;
 
     @Test
     public void createOrderFromCart_ReturnsSavedOrder() {
