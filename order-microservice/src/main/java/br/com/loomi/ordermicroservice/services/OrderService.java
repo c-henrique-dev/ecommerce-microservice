@@ -12,7 +12,6 @@ import br.com.loomi.ordermicroservice.repositories.OrderRepository;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -23,10 +22,12 @@ public class OrderService {
 
     private OrderRepository orderRepository;
     private ProductClient productClient;
+    private CartService cartService;
 
-    public OrderService(ProductClient productClient, OrderRepository orderRepository) {
+    public OrderService(ProductClient productClient, OrderRepository orderRepository, CartService cartService) {
         this.orderRepository = orderRepository;
         this.productClient = productClient;
+        this.cartService = cartService;
     }
 
     public Order createOrderFromCart(Cart cart) {
@@ -47,7 +48,15 @@ public class OrderService {
 
         order.setOrderItems(orderItems);
 
-        return orderRepository.save(order);
+        Order orderSaved = orderRepository.save(order);
+
+        if (orderSaved.getId() != null) {
+            cart.getItems().forEach(item ->
+                    cartService.removeItemFromCart(cart.getCustomerId(), item.getProductId())
+            );
+
+        }
+        return orderSaved;
     }
 
     public Order findById(UUID id) {
@@ -60,7 +69,7 @@ public class OrderService {
     public List<OrderWithProductDTO> findOrdersByPeriod(LocalDateTime initialDate, LocalDateTime endDate) {
         List<Object[]> orders = orderRepository.findOrdersByPeriod(initialDate, endDate);
 
-        if(orders.isEmpty()) {
+        if (orders.isEmpty()) {
             throw new NotFoundException("Orders not found");
         }
 
@@ -95,31 +104,7 @@ public class OrderService {
             throw new IllegalStateException("Cannot update status of a delivered order.");
         }
 
-        validateStatusTransition(order.getOrderStatus(), newStatus);
-
         order.setOrderStatus(newStatus);
         this.orderRepository.save(order);
-    }
-
-    private void validateStatusTransition(OrderStatus currentStatus, OrderStatus newStatus) {
-        switch (currentStatus) {
-            case INPREPARATION:
-                if (newStatus != OrderStatus.RECEIVED) {
-                    throw new IllegalStateException("Invalid status transition from PREPARATION to " + newStatus);
-                }
-                break;
-            case RECEIVED:
-                if (newStatus != OrderStatus.DISPATCHED) {
-                    throw new IllegalStateException("Invalid status transition from RECEIVED to " + newStatus);
-                }
-                break;
-            case DISPATCHED:
-                if (newStatus != OrderStatus.DELIVERED) {
-                    throw new IllegalStateException("Invalid status transition from DISPATCHED to " + newStatus);
-                }
-                break;
-            default:
-                throw new IllegalStateException("No transitions allowed from status: " + currentStatus);
-        }
     }
 }
