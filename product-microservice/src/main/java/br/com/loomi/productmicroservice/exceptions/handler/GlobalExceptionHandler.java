@@ -9,10 +9,12 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import feign.FeignException;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.AccessDeniedException;
+import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -65,6 +67,16 @@ public class GlobalExceptionHandler {
     @ResponseStatus(HttpStatus.FORBIDDEN)
     public ErrorResponse handleAccesDeniedException(AccessDeniedException e) {
         return ErrorResponse.defaultResponse(e.getMessage());
+    }
+
+    @ExceptionHandler(MethodArgumentNotValidException.class)
+    @ResponseStatus(HttpStatus.UNPROCESSABLE_ENTITY)
+    public ErrorResponse handleValidationException(MethodArgumentNotValidException ex) {
+        List<FieldError> fieldErrors = ex.getBindingResult().getFieldErrors().stream()
+                .map(error -> new FieldError(error.getField(), error.getDefaultMessage()))
+                .toList();
+
+        return new ErrorResponse("Validation error", fieldErrors);
     }
 
     @ExceptionHandler(RuntimeException.class)
