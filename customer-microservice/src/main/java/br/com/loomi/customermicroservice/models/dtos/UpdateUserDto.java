@@ -14,9 +14,6 @@ import lombok.NoArgsConstructor;
 @Data
 @Builder
 public class UpdateUserDto {
-    @Size(max = 50, message = "Name must not exceed 50 characters.")
-    private String name;
-
     @Email(message = "Email must be valid.")
     private String email;
 
