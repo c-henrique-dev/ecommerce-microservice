@@ -24,6 +24,7 @@ public class ProductDto {
     @Min(value = 1, message = "Quantity must be at least 1.")
     private Integer qtd;
 
+    @NotNull(message = "description is required.")
     @Size(max = 255, message = "Description must not exceed 255 characters.")
     private String description;
 }
