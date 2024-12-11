@@ -36,6 +36,9 @@ public class CustomerServiceTest {
     private CustomerService customerService;
 
     @Mock
+    private MailService mailService;
+
+    @Mock
     private CustomerRepository customerRepository;
 
     @Mock
@@ -46,7 +49,6 @@ public class CustomerServiceTest {
         User user = User.builder()
                 .email("carlossoaressantana@hotmail.com")
                 .type(UserType.CUSTOMER)
-                .name("teste")
                 .password("123456")
                 .build();
 
@@ -60,7 +62,6 @@ public class CustomerServiceTest {
 
         UserDto userDto = UserDto.builder()
                 .type(user.getType())
-                .name(user.getName())
                 .password("123456")
                 .email(user.getEmail())
                 .build();
@@ -73,7 +74,7 @@ public class CustomerServiceTest {
                 .build();
 
         when(customerRepository.save(Mockito.any(Customer.class))).thenReturn(customer);
-        when(passwordEncoder.encode("123456")).thenReturn("encodedPassword");
+        when(passwordEncoder.encode(user.getPassword())).thenReturn(user.getPassword());
 
         Customer sut = customerService.save(customerDto);
 
@@ -81,6 +82,7 @@ public class CustomerServiceTest {
         assertThat(sut).isNotNull();
         assertThat(sut.getFullName()).isEqualTo(customer.getFullName());
         assertThat(sut.getContact()).isEqualTo(customer.getContact());
+
     }
 
     @Test
@@ -88,7 +90,6 @@ public class CustomerServiceTest {
         User user = User.builder()
                 .email("carlossoaressantana@hotmail.com")
                 .type(UserType.CUSTOMER)
-                .name("teste")
                 .password("123456")
                 .build();
 
@@ -102,7 +103,6 @@ public class CustomerServiceTest {
 
         UserDto userDto = UserDto.builder()
                 .type(user.getType())
-                .name(user.getName())
                 .password("123456")
                 .email(user.getEmail())
                 .build();
@@ -124,7 +124,6 @@ public class CustomerServiceTest {
         User user = User.builder()
                 .email("carlossoaressantana@hotmail.com")
                 .type(UserType.CUSTOMER)
-                .name("teste")
                 .password("123456")
                 .build();
 

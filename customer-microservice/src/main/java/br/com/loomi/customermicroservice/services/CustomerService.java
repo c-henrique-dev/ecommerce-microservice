@@ -12,14 +12,10 @@ import org.springframework.data.domain.Example;
 import org.springframework.data.domain.ExampleMatcher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.mail.SimpleMailMessage;
-import org.springframework.mail.javamail.JavaMailSender;
-import org.springframework.scheduling.annotation.Async;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.Optional;
 import java.util.UUID;
 
 @Service
@@ -27,12 +23,12 @@ public class CustomerService {
 
     private CustomerRepository customerRepository;
     private PasswordEncoder passwordEncoder;
-    private JavaMailSender javaMailSender;
+    private MailService mailService;
 
-    public CustomerService(JavaMailSender javaMailSender, CustomerRepository customerRepository, PasswordEncoder passwordEncoder) {
+    public CustomerService(MailService mailService, CustomerRepository customerRepository, PasswordEncoder passwordEncoder) {
         this.customerRepository = customerRepository;
         this.passwordEncoder = passwordEncoder;
-        this.javaMailSender = javaMailSender;
+        this.mailService = mailService;
     }
 
     @Transactional
@@ -47,41 +43,14 @@ public class CustomerService {
             customer.setStatus(false);
             customer.getUser().setPassword(passwordEncoder.encode(customerDto.getUserDto().getPassword()));
 
-            sendConfirmationEmailAsync(user);
-
             Customer customerSaved = customerRepository.save(customer);
+
+            this.mailService.sendConfirmationEmailAsync(user);
 
             return customerSaved;
         } catch (Exception e) {
             throw new BadRequestException(e.getMessage());
         }
-    }
-
-    @Async
-    public void sendConfirmationEmailAsync(User user) {
-        try {
-            String confirmationLink = "http://localhost:8888/customer/confirm?email=" + user.getEmail();
-
-            SimpleMailMessage message = new SimpleMailMessage();
-            message.setTo("carlossoaressantana081@gmail.com");
-            message.setSubject("Confirme seu e-mail");
-            message.setText("Clique no link para confirmar seu e-mail: " + confirmationLink);
-
-            javaMailSender.send(message);
-        } catch (Exception e) {
-        }
-    }
-
-
-    public String confirmEmail(String email) {
-        Optional<Customer> userOpt = customerRepository.findByUserEmail(email);
-        if (userOpt.isPresent()) {
-            Customer customer = userOpt.get();
-            customer.setStatus(true);
-            customerRepository.save(customer);
-            return "E-mail confirmado com sucesso";
-        }
-        return "Erro ao confirmar o e-mail";
     }
 
     @Transactional
@@ -106,10 +75,6 @@ public class CustomerService {
                         }
                         if (updateCustomerDto.getUserDto().getPassword() != null) {
                             c.getUser().setPassword(passwordEncoder.encode(updateCustomerDto.getUserDto().getPassword()));
-                        }
-
-                        if (updateCustomerDto.getUserDto().getName() != null) {
-                            c.getUser().setName(updateCustomerDto.getUserDto().getName());
                         }
 
                         if (updateCustomerDto.getUserDto().getType() != null) {

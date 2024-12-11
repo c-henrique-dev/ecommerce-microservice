@@ -34,11 +34,6 @@ public class CustomerController {
         this.securityService = securityService;
     }
 
-    @GetMapping("/confirm")
-    public ResponseEntity<String> confirmEmail(@RequestParam String email) {
-        return ResponseEntity.ok(customerService.confirmEmail(email));
-    }
-
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     @Operation(summary = "Create a new customer", description = "Creates a new customer using the provided data.")
