@@ -24,9 +24,9 @@ public class PaymentSubscriber {
             Payment payment = mapper.readValue(payload, Payment.class);
             payment.setStatus();
             this.paymentRepository.save(payment);
-            log.info("Recebi a mensagem");
+            log.info("Message coming from RabbitMQ");
         } catch (Exception e) {
-            log.error("Erro ao receber solicitação de emissão de cartão: {} ", e.getMessage());
+            log.error("Error receiving request: {} ", e.getMessage());
         }
     }
 }
