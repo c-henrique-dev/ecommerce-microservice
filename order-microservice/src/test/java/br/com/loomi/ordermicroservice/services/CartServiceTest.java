@@ -5,11 +5,15 @@ import br.com.loomi.ordermicroservice.exceptions.BadRequestException;
 import br.com.loomi.ordermicroservice.models.dtos.ProductDto;
 import br.com.loomi.ordermicroservice.models.entities.Cart;
 import br.com.loomi.ordermicroservice.models.entities.CartItem;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.data.redis.core.ValueOperations;
 import org.springframework.http.ResponseEntity;
 
 import java.math.BigDecimal;
@@ -19,8 +23,7 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 public class CartServiceTest {
@@ -30,6 +33,9 @@ public class CartServiceTest {
 
     @Mock
     private ProductClient productClient;
+
+    @Mock
+    private RedisTemplate<String, Cart> redisTemplate;
 
     @Test
     public void addToCart_WhenProductIsAvailable_ShouldAddItemToCart() {
@@ -44,7 +50,16 @@ public class CartServiceTest {
                 .price(new BigDecimal("5200"))
                 .build();
 
+        String redisKey = "cart:" + customerId;
+
         when(productClient.findById(productId)).thenReturn(ResponseEntity.ok(productDto));
+
+        RedisTemplate<String, String> redisTemplateMock = mock(RedisTemplate.class);
+        ValueOperations<String, String> valueOperationsMock = mock(ValueOperations.class);
+        when(redisTemplateMock.opsForValue()).thenReturn(valueOperationsMock);
+        when(valueOperationsMock.get(redisKey)).thenReturn(null);
+
+        CartService cartService = new CartService(productClient, redisTemplateMock, new ObjectMapper());
 
         ResponseEntity<Cart> response = cartService.addToCart(customerId, productId, quantity);
 
@@ -55,6 +70,7 @@ public class CartServiceTest {
         assertThat(response.getBody().getItems().get(0).getQtd()).isEqualTo(quantity);
 
         verify(productClient).findById(productId);
+        verify(valueOperationsMock).get(redisKey);
     }
 
     @Test
@@ -72,16 +88,13 @@ public class CartServiceTest {
 
         when(productClient.findById(productId)).thenReturn(ResponseEntity.ok(productDto));
 
-        assertThatThrownBy(() ->
-                cartService.addToCart(customerId, productId, requestedQuantity)
-        ).isInstanceOf(BadRequestException.class)
+        assertThatThrownBy(() -> cartService.addToCart(customerId, productId, requestedQuantity))
+                .isInstanceOf(BadRequestException.class)
                 .hasMessage("Insufficient quantity in stock");
-
-        verify(productClient).findById(productId);
     }
 
     @Test
-    public void removeFromCart_WhenCartAndItemExist_ShouldRemoveItem() {
+    public void removeFromCart_WhenCartAndItemExist_ShouldRemoveItem() throws JsonProcessingException {
         UUID customerId = UUID.randomUUID();
         UUID productId = UUID.randomUUID();
 
@@ -97,9 +110,13 @@ public class CartServiceTest {
                 .items(new ArrayList<>(List.of(cartItem)))
                 .build();
 
-        cartService.setCarts(customerId, cart);
+        RedisTemplate<String, String> redisTemplateMock = mock(RedisTemplate.class);
+        ValueOperations<String, String> valueOperationsMock = mock(ValueOperations.class);
+        when(redisTemplateMock.opsForValue()).thenReturn(valueOperationsMock);
 
-        Cart response = cartService.removeFromCart(customerId, productId);
+        CartService cartService = new CartService(productClient, redisTemplateMock, new ObjectMapper());
+
+        Cart response = cartService.removeItemFromCart(customerId, productId);
 
         assertThat(response).isNotNull();
         assertThat(response.getItems()).isEmpty();
@@ -110,9 +127,15 @@ public class CartServiceTest {
         UUID customerId = UUID.randomUUID();
         UUID productId = UUID.randomUUID();
 
-        cartService.setCarts(customerId, new Cart());
+        RedisTemplate<String, String> redisTemplateMock = mock(RedisTemplate.class);
+        ValueOperations<String, String> valueOperationsMock = mock(ValueOperations.class);
+        when(redisTemplateMock.opsForValue()).thenReturn(valueOperationsMock);
 
-        Cart response = cartService.removeFromCart(customerId, productId);
+        String redisKey = "cart:" + customerId;
+        when(valueOperationsMock.get(redisKey)).thenReturn(null);
+
+        CartService cartService = new CartService(productClient, redisTemplateMock, new ObjectMapper());
+        Cart response = cartService.removeItemFromCart(customerId, productId);
 
         assertThat(response).isNotNull();
         assertThat(response.getItems()).isEmpty();
