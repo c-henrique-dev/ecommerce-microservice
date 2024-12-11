@@ -61,7 +61,7 @@ public class PaymentService {
             order.setOrderStatus(OrderStatus.PAYMENT_REJECTED);
             orderRepository.save(order);
 
-            return ResponseEntity.badRequest().body(Map.of("message", "Payment denied. Order status updated to PAYMENT_REJECTED."));
+            return ResponseEntity.ok(Map.of("message", "Payment denied. Order status updated to PAYMENT_REJECTED."));
         }
     }
 }
