@@ -1,0 +1,277 @@
+services:
+  minio:
+    image: minio/minio:latest
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: admin
+      MINIO_ROOT_PASSWORD: supersecret
+    ports:
+      - 9000:9000
+      - 9001:9001
+    networks:
+      - network
+    volumes:
+      - storage:/data
+
+  redis:
+    container_name: redis
+    image: redis
+    command: redis-server
+    ports:
+      - "6379:6379"
+    volumes:
+    - redis_data:/data
+
+  rabbitmq:
+    image: rabbitmq:3.11-management
+    container_name: rabbitmqq
+    environment:
+      - RABBITMQ_DEFAULT_USER=guest
+      - RABBITMQ_DEFAULT_PASS=guest
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+
+  eureka-server:
+    build:
+      context: ./eureka-server
+      dockerfile: Dockerfile
+    ports:
+      - 8761:8761
+    environment:
+      - EUREKA_USERNAME=eureka-user
+      - EUREKA_PASSWORD=123456
+    networks:
+      - network
+
+  cloud-gateway:
+    build:
+      context: ./cloud-gateway
+      dockerfile: Dockerfile
+    ports:
+      - 8888:8888
+    depends_on:
+      - eureka-server
+    environment:
+      - EUREKA_CLIENT_SERVICE_URL_DEFAULTZONE=http://eureka-user:123456@eureka-server:8761/eureka
+    networks:
+      - network
+
+  auth-microservice:
+    build:
+      context: ./auth-microservice
+      dockerfile: Dockerfile
+    environment:
+      # Application
+      - SPRING_APPLICATION_NAME=auth-microservice
+      # Database
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://192.168.15.108:5432/customer-microservice
+      - SPRING_DATASOURCE_DRIVERCLASSNAME=org.postgresql.Driver
+      - SPRING_DATASOURCE_USERNAME=postgres
+      - SPRING_DATASOURCE_PASSWORD=postgres
+      # JPA
+      - SPRING_JPA_DATABASE-PLATFORM=org.hibernate.dialect.PostgreSQLDialect
+      - SPRING_JPA_PROPERTIES_HIBERNATE_SHOW_SQL=true
+      - SPRING_JPA_PROPERTIES_HIBERNATE_FORMAT_SQL=true
+      - SPRING_JPA_HIBERNATE_DDL_AUTO=none
+      # Security
+      - SECURITY_JWT_EXPIRATION=30
+      - SECURITY_JWT_KEY_SIGNATURE=VrAhBEGD0zcsL8T6w3PmYDaFWtcW2vWz1cW57Lk05bSCnDrdYnTbJhGeBZdFufraJUNw0jFvbsmAAngSMYHPeqYH5nj7AeL2
+      # Eureka
+      - EUREKA_INSTANCE_PREFER_IP_ADDRESS=true
+      - EUREKA_CLIENT_SERVICE_URL_DEFAULTZONE=http://eureka-user:123456@eureka-server:8761/eureka
+      - EUREKA_INSTANCE_INSTANCE_ID=auth-microservice:auth-microservice-344errtd:jkdnkfjndjfff
+      #REDIS
+      - SPRING_REDIS_HOST=redis
+      - SPRING_REDIS_PORT=6379
+      - SPRING_CACHE_TYPE=redis
+      #ACTUATOR
+      - MANAGEMENT_ENDPOINTS_WEB_EXPOSURE_INCLUDE=*
+      - MANAGEMENT_ENDPOINT_HEALTH_SHOW-DETAILS=always
+    depends_on:
+      - eureka-server
+      - redis
+    networks:
+      - network
+
+  customer-microservice:
+    build:
+      context: ./customer-microservice
+      dockerfile: Dockerfile
+    environment:
+      # Application
+      - SPRING_APPLICATION_NAME=customer-microservice
+      # Database
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://192.168.15.108:5432/customer-microservice
+      - SPRING_DATASOURCE_DRIVERCLASSNAME=org.postgresql.Driver
+      - SPRING_DATASOURCE_USERNAME=postgres
+      - SPRING_DATASOURCE_PASSWORD=postgres
+      # JPA
+      - SPRING_JPA_DATABASE-PLATFORM=org.hibernate.dialect.PostgreSQLDialect
+      - SPRING_JPA_PROPERTIES_HIBERNATE_SHOW_SQL=true
+      - SPRING_JPA_PROPERTIES_HIBERNATE_FORMAT_SQL=true
+      - SPRING_JPA_HIBERNATE_DDL_AUTO=none
+      # Security
+      - SECURITY_JWT_EXPIRATION=30
+      - SECURITY_JWT_KEY_SIGNATURE=VrAhBEGD0zcsL8T6w3PmYDaFWtcW2vWz1cW57Lk05bSCnDrdYnTbJhGeBZdFufraJUNw0jFvbsmAAngSMYHPeqYH5nj7AeL2
+      # Eureka
+      - EUREKA_INSTANCE_PREFER_IP_ADDRESS=true
+      - EUREKA_CLIENT_SERVICE_URL_DEFAULTZONE=http://eureka-user:123456@eureka-server:8761/eureka
+      - EUREKA_INSTANCE_INSTANCE_ID=customer-microservice:customer-microservice-334rt5:ssdf4560io
+      #ACTUATOR
+      - MANAGEMENT_ENDPOINTS_WEB_EXPOSURE_INCLUDE=*
+      - MANAGEMENT_ENDPOINT_HEALTH_SHOW-DETAILS=always    
+    depends_on:
+      - eureka-server
+    networks:
+      - network
+
+  order-microservice:
+    build:
+      context: ./order-microservice
+      dockerfile: Dockerfile
+    environment:
+      # Application
+      - SPRING_APPLICATION_NAME=order-microservice
+      # Database
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://192.168.15.108:5432/order-microservice
+      - SPRING_DATASOURCE_DRIVERCLASSNAME=org.postgresql.Driver
+      - SPRING_DATASOURCE_USERNAME=postgres
+      - SPRING_DATASOURCE_PASSWORD=postgres
+      # JPA
+      - SPRING_JPA_DATABASE-PLATFORM=org.hibernate.dialect.PostgreSQLDialect
+      - SPRING_JPA_PROPERTIES_HIBERNATE_SHOW_SQL=true
+      - SPRING_JPA_PROPERTIES_HIBERNATE_FORMAT_SQL=true
+      - SPRING_JPA_HIBERNATE_DDL_AUTO=none
+      # Security
+      - SECURITY_JWT_EXPIRATION=30
+      - SECURITY_JWT_KEY_SIGNATURE=VrAhBEGD0zcsL8T6w3PmYDaFWtcW2vWz1cW57Lk05bSCnDrdYnTbJhGeBZdFufraJUNw0jFvbsmAAngSMYHPeqYH5nj7AeL2
+      # Eureka
+      - EUREKA_INSTANCE_PREFER_IP_ADDRESS=true
+      - EUREKA_CLIENT_SERVICE_URL_DEFAULTZONE=http://eureka-user:123456@eureka-server:8761/eureka
+      - EUREKA_INSTANCE_INSTANCE_ID=order-microservice:order-microservice-2344ert5:dffg56hjk
+    #REDIS
+      - SPRING_REDIS_HOST=redis
+      - SPRING_REDIS_PORT=6379
+      - SPRING_CACHE_TYPE=redis
+      #ACTUATOR
+      - MANAGEMENT_ENDPOINTS_WEB_EXPOSURE_INCLUDE=*
+      - MANAGEMENT_ENDPOINT_HEALTH_SHOW-DETAILS=always    
+    depends_on:
+      - eureka-server
+      - redis
+    networks:
+      - network
+
+  product-microservice:
+    build:
+      context: ./product-microservice
+      dockerfile: Dockerfile
+    environment:
+      # Application
+      - SPRING_APPLICATION_NAME=product-microservice
+      # Database
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://192.168.15.108:5432/product-microservice
+      - SPRING_DATASOURCE_DRIVERCLASSNAME=org.postgresql.Driver
+      - SPRING_DATASOURCE_USERNAME=postgres
+      - SPRING_DATASOURCE_PASSWORD=postgres
+      # JPA
+      - SPRING_JPA_DATABASE-PLATFORM=org.hibernate.dialect.PostgreSQLDialect
+      - SPRING_JPA_PROPERTIES_HIBERNATE_SHOW_SQL=true
+      - SPRING_JPA_PROPERTIES_HIBERNATE_FORMAT_SQL=true
+      - SPRING_JPA_HIBERNATE_DDL_AUTO=none
+      # Security
+      - SECURITY_JWT_EXPIRATION=30
+      - SECURITY_JWT_KEY_SIGNATURE=VrAhBEGD0zcsL8T6w3PmYDaFWtcW2vWz1cW57Lk05bSCnDrdYnTbJhGeBZdFufraJUNw0jFvbsmAAngSMYHPeqYH5nj7AeL2
+      # Eureka
+      - EUREKA_INSTANCE_PREFER_IP_ADDRESS=true
+      - EUREKA_CLIENT_SERVICE_URL_DEFAULTZONE=http://eureka-user:123456@eureka-server:8761/eureka
+      - EUREKA_INSTANCE_INSTANCE_ID=product-microservice:product-microservice-3445rty:566tyui
+      #ACTUATOR
+      - MANAGEMENT_ENDPOINTS_WEB_EXPOSURE_INCLUDE=*
+      - MANAGEMENT_ENDPOINT_HEALTH_SHOW-DETAILS=always
+    depends_on:
+      - eureka-server
+    networks:
+      - network
+
+  report-microservice:
+    build:
+      context: ./report-microservice
+      dockerfile: Dockerfile
+    environment:
+      # Application
+      - SPRING_APPLICATION_NAME=report-microservice
+      # Database
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://192.168.15.108:5432/report-microservice
+      - SPRING_DATASOURCE_DRIVERCLASSNAME=org.postgresql.Driver
+      - SPRING_DATASOURCE_USERNAME=postgres
+      - SPRING_DATASOURCE_PASSWORD=postgres
+      # JPA
+      - SPRING_JPA_DATABASE-PLATFORM=org.hibernate.dialect.PostgreSQLDialect
+      - SPRING_JPA_PROPERTIES_HIBERNATE_SHOW_SQL=true
+      - SPRING_JPA_PROPERTIES_HIBERNATE_FORMAT_SQL=true
+      - SPRING_JPA_HIBERNATE_DDL_AUTO=none
+      # Security
+      - SECURITY_JWT_EXPIRATION=30
+      - SECURITY_JWT_KEY_SIGNATURE=VrAhBEGD0zcsL8T6w3PmYDaFWtcW2vWz1cW57Lk05bSCnDrdYnTbJhGeBZdFufraJUNw0jFvbsmAAngSMYHPeqYH5nj7AeL2
+      # Eureka
+      - EUREKA_INSTANCE_PREFER_IP_ADDRESS=true
+      - EUREKA_CLIENT_SERVICE_URL_DEFAULTZONE=http://eureka-user:123456@eureka-server:8761/eureka
+      - EUREKA_INSTANCE_INSTANCE_ID=report-microservice:report-microservice-344eroip0:fvbbng8jmkl
+      # Minio
+      - MINIO_URL=http://minio:9000
+      - MINIO_ACCESS_KEY=joPjCflOdTg30mumkddR
+      - MINIO_SECRET_KEY=0ImZXT2fjj95THAqTZWVEIpy0U4kD6cEf2d6QipF
+      - MINIO_BUCKET=report
+      - MINIO_PUT_OBJECT_PART_SIZE=5242880
+      #ACTUATOR
+      - MANAGEMENT_ENDPOINTS_WEB_EXPOSURE_INCLUDE=*
+      - MANAGEMENT_ENDPOINT_HEALTH_SHOW-DETAILS=always
+    depends_on:
+      - eureka-server
+      - minio
+    networks:
+      - network
+
+  payment-microservice:
+      build:
+        context: ./payment-microservice
+        dockerfile: Dockerfile
+      environment:
+        # Application
+        - SPRING_APPLICATION_NAME=payment-microservice
+        # Database
+        - SPRING_DATASOURCE_URL=jdbc:postgresql://192.168.15.108:5432/payment-microservice
+        - SPRING_DATASOURCE_DRIVERCLASSNAME=org.postgresql.Driver
+        - SPRING_DATASOURCE_USERNAME=postgres
+        - SPRING_DATASOURCE_PASSWORD=postgres
+        # JPA
+        - SPRING_JPA_DATABASE-PLATFORM=org.hibernate.dialect.PostgreSQLDialect
+        - SPRING_JPA_PROPERTIES_HIBERNATE_SHOW_SQL=true
+        - SPRING_JPA_PROPERTIES_HIBERNATE_FORMAT_SQL=true
+        - SPRING_JPA_HIBERNATE_DDL_AUTO=none
+        # Security
+        - SECURITY_JWT_EXPIRATION=30
+        - SECURITY_JWT_KEY_SIGNATURE=VrAhBEGD0zcsL8T6w3PmYDaFWtcW2vWz1cW57Lk05bSCnDrdYnTbJhGeBZdFufraJUNw0jFvbsmAAngSMYHPeqYH5nj7AeL2
+        # Eureka
+        - EUREKA_INSTANCE_PREFER_IP_ADDRESS=true
+        - EUREKA_CLIENT_SERVICE_URL_DEFAULTZONE=http://eureka-user:123456@eureka-server:8761/eureka
+        - EUREKA_INSTANCE_INSTANCE_ID=payment-microservice:payment-microservice-dsdseroip0:fvbbng8jmkl
+        #ACTUATOR
+        - MANAGEMENT_ENDPOINTS_WEB_EXPOSURE_INCLUDE=*
+        - MANAGEMENT_ENDPOINT_HEALTH_SHOW-DETAILS=always
+      depends_on:
+        - eureka-server
+        - minio
+      networks:
+        - network
+
+networks:
+  network:
+volumes:
+  storage:
+  rabbitmq_data:
+  redis_data:
