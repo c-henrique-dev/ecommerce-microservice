@@ -1,6 +1,5 @@
 package br.com.loomi.authmicroservice.services;
 
-import br.com.loomi.authmicroservice.exceptions.BadRequestException;
 import br.com.loomi.authmicroservice.models.Customer;
 import com.auth0.jwt.JWT;
 import com.auth0.jwt.algorithms.Algorithm;
@@ -25,21 +24,17 @@ public class JwtService {
 
     public String getToken(Customer customer) {
         try {
-            if (customer.getStatus() != false) {
-                long expString = Long.valueOf(expiration);
-                LocalDateTime expiration = LocalDateTime.now().plusMinutes(expString);
-                Instant instant = expiration.atZone(ZoneId.systemDefault()).toInstant();
-                Date date = Date.from(instant);
-                Algorithm algorithm = Algorithm.HMAC512(keySignature);
-                String token = JWT.create()
-                        .withSubject(customer.getUser().getEmail())
-                        .withClaim("id", String.valueOf(customer.getId()))
-                        .withExpiresAt(date)
-                        .sign(algorithm);
-                return token;
-            } else {
-                throw new BadRequestException("O e-mail ainda não foi verificado");
-            }
+            long expString = Long.valueOf(expiration);
+            LocalDateTime expiration = LocalDateTime.now().plusHours(expString);
+            Instant instant = expiration.atZone(ZoneId.systemDefault()).toInstant();
+            Date date = Date.from(instant);
+            Algorithm algorithm = Algorithm.HMAC512(keySignature);
+            String token = JWT.create()
+                    .withSubject(customer.getUser().getEmail())
+                    .withClaim("id", String.valueOf(customer.getId()))
+                    .withExpiresAt(date)
+                    .sign(algorithm);
+            return token;
         } catch (JWTCreationException e) {
             throw new RuntimeException("Error generating token");
         }
