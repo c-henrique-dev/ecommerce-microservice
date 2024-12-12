@@ -39,6 +39,15 @@ public class Payment {
     @Column(name = "transaction_id")
     private UUID transactionId;
 
+    @Column(name = "card_number")
+    private String cardNumber;
+
+    @Column
+    private Integer installments;
+
+    @Column(name = "security_code")
+    private String securityCode;
+
     @CreationTimestamp
     @Column(name = "created_At", updatable = false, nullable = false)
     private LocalDateTime createdAt;

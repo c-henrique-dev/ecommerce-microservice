@@ -20,4 +20,7 @@ public class PaymentDto {
     private BigDecimal amount;
     private PaymentStatus status;
     private UUID transactionId;
+    private String cardNumber;
+    private Integer installments;
+    private String securityCode;
 }

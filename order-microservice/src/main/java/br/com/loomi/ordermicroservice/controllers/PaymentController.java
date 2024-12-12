@@ -1,11 +1,12 @@
 package br.com.loomi.ordermicroservice.controllers;
 
-import br.com.loomi.ordermicroservice.models.dtos.PaymentDto;
+import br.com.loomi.ordermicroservice.models.dtos.PaymentMethodDto;
 import br.com.loomi.ordermicroservice.services.PaymentService;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
@@ -31,7 +32,7 @@ public class PaymentController {
     @PostMapping("{orderId}")
     @PreAuthorize("hasAnyRole('CUSTOMER', 'ADMIN')")
     public ResponseEntity<Map> simulatePayment(
-            @PathVariable @Parameter(description = "Order identifier for payment") UUID orderId) throws JsonProcessingException {
-        return paymentService.simulatePayment(orderId);
+            @PathVariable @Parameter(description = "Order identifier for payment") UUID orderId, @RequestBody @Valid PaymentMethodDto paymentMethodDto) throws JsonProcessingException {
+        return paymentService.simulatePayment(orderId, paymentMethodDto);
     }
 }
