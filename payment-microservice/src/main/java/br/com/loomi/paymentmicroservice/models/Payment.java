@@ -11,7 +11,6 @@ import org.hibernate.annotations.UpdateTimestamp;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
-import java.util.Random;
 import java.util.UUID;
 
 @Entity
@@ -47,10 +46,4 @@ public class Payment {
     @UpdateTimestamp
     @Column(name = "updated_At", nullable = false)
     private LocalDateTime updatedAt;
-
-    public void setStatus() {
-        PaymentStatus[] statuses = PaymentStatus.values();
-        int randomIndex = new Random().nextInt(statuses.length);
-        this.status = statuses[randomIndex];
-    }
 }
