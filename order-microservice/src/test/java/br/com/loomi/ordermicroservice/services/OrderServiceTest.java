@@ -5,6 +5,7 @@ import br.com.loomi.ordermicroservice.models.entities.CartItem;
 import br.com.loomi.ordermicroservice.models.entities.Order;
 import br.com.loomi.ordermicroservice.models.entities.OrderItem;
 import br.com.loomi.ordermicroservice.models.enums.OrderStatus;
+import br.com.loomi.ordermicroservice.queues.PaymentPublisher;
 import br.com.loomi.ordermicroservice.repositories.OrderRepository;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -32,6 +33,9 @@ public class OrderServiceTest {
 
     @Mock
     private CartService cartService;
+
+    @Mock
+    private PaymentPublisher paymentPublisher;
 
     @Test
     public void createOrderFromCart_ReturnsSavedOrder() {
