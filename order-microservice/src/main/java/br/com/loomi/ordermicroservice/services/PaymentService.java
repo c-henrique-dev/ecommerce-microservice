@@ -58,6 +58,15 @@ public class PaymentService {
 
             return ResponseEntity.ok(Map.of("message", "Payment confirmed. Stock debited and order status updated to RECEIVED."));
         } else {
+            PaymentDto paymentDto = PaymentDto.builder()
+                    .customerId(order.getCustomerId())
+                    .orderId(orderId)
+                    .status(PaymentStatus.REFUSED)
+                    .transactionId(UUID.randomUUID())
+                    .amount(order.getTotalOfOrder())
+                    .build();
+
+            this.paymentPublisher.makePayment(paymentDto);
             order.setOrderStatus(OrderStatus.PAYMENT_REJECTED);
             orderRepository.save(order);
 
