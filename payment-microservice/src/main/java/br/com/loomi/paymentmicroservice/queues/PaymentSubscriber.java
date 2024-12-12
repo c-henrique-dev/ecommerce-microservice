@@ -29,7 +29,6 @@ public class PaymentSubscriber {
 
             Payment paymentSaved = this.paymentRepository.save(payment);
 
-            System.out.println(paymentSaved);
             if (paymentSaved.getStatus() != PaymentStatus.APPROVED) {
                 this.mailService.sendPaymentEmailAsync("Seu pagamento foi recusado! :(",
                         "Informamos que a sua tentativa de pagamento foi recusada. " +

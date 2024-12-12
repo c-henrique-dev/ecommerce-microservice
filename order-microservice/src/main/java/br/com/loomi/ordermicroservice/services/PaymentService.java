@@ -3,6 +3,7 @@ package br.com.loomi.ordermicroservice.services;
 import br.com.loomi.ordermicroservice.clients.ProductClient;
 import br.com.loomi.ordermicroservice.exceptions.NotFoundException;
 import br.com.loomi.ordermicroservice.models.dtos.PaymentDto;
+import br.com.loomi.ordermicroservice.models.dtos.PaymentMethodDto;
 import br.com.loomi.ordermicroservice.models.entities.Order;
 import br.com.loomi.ordermicroservice.models.enums.OrderStatus;
 import br.com.loomi.ordermicroservice.models.enums.PaymentStatus;
@@ -29,7 +30,7 @@ public class PaymentService {
         this.productClient = productClient;
     }
 
-    public ResponseEntity<Map> simulatePayment(UUID orderId) throws JsonProcessingException {
+    public ResponseEntity<Map> simulatePayment(UUID orderId, PaymentMethodDto paymentMethodDto) throws JsonProcessingException {
         Order order = orderRepository.findById(orderId).orElseThrow(() -> new NotFoundException("Order not found"));
 
         boolean paymentSuccessful = new Random().nextBoolean();
@@ -41,6 +42,9 @@ public class PaymentService {
                     .customerId(order.getCustomerId())
                     .orderId(orderId)
                     .status(PaymentStatus.APPROVED)
+                    .installments(paymentMethodDto.getInstallments())
+                    .cardNumber(paymentMethodDto.getCardNumber())
+                    .securityCode(paymentMethodDto.getSecurityCode())
                     .transactionId(UUID.randomUUID())
                     .amount(order.getTotalOfOrder())
                     .build();
@@ -61,6 +65,9 @@ public class PaymentService {
             PaymentDto paymentDto = PaymentDto.builder()
                     .customerId(order.getCustomerId())
                     .orderId(orderId)
+                    .installments(paymentMethodDto.getInstallments())
+                    .cardNumber(paymentMethodDto.getCardNumber())
+                    .securityCode(paymentMethodDto.getSecurityCode())
                     .status(PaymentStatus.REFUSED)
                     .transactionId(UUID.randomUUID())
                     .amount(order.getTotalOfOrder())

@@ -3,12 +3,15 @@ package br.com.loomi.ordermicroservice.services;
 import br.com.loomi.ordermicroservice.clients.ProductClient;
 import br.com.loomi.ordermicroservice.exceptions.NotFoundException;
 import br.com.loomi.ordermicroservice.models.dtos.OrderWithProductDTO;
+import br.com.loomi.ordermicroservice.models.dtos.PaymentDto;
 import br.com.loomi.ordermicroservice.models.dtos.ProductDto;
 import br.com.loomi.ordermicroservice.models.entities.Cart;
 import br.com.loomi.ordermicroservice.models.entities.Order;
 import br.com.loomi.ordermicroservice.models.entities.OrderItem;
 import br.com.loomi.ordermicroservice.models.enums.OrderStatus;
+import br.com.loomi.ordermicroservice.queues.PaymentPublisher;
 import br.com.loomi.ordermicroservice.repositories.OrderRepository;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
@@ -23,11 +26,13 @@ public class OrderService {
     private OrderRepository orderRepository;
     private ProductClient productClient;
     private CartService cartService;
+    private PaymentPublisher paymentPublisher;
 
-    public OrderService(ProductClient productClient, OrderRepository orderRepository, CartService cartService) {
+    public OrderService(ProductClient productClient, OrderRepository orderRepository, CartService cartService, PaymentPublisher paymentPublisher) {
         this.orderRepository = orderRepository;
         this.productClient = productClient;
         this.cartService = cartService;
+        this.paymentPublisher = paymentPublisher;
     }
 
     public Order createOrderFromCart(Cart cart) {
@@ -56,6 +61,20 @@ public class OrderService {
             );
 
         }
+
+        PaymentDto paymentDto = PaymentDto.builder()
+                .customerId(order.getCustomerId())
+                .orderId(order.getId())
+                .transactionId(UUID.randomUUID())
+                .amount(order.getTotalOfOrder())
+                .build();
+
+        try {
+            this.paymentPublisher.makePayment(paymentDto);
+        } catch (JsonProcessingException e) {
+            throw new RuntimeException(e);
+        }
+
         return orderSaved;
     }
 
