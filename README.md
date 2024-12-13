@@ -28,6 +28,13 @@ funcional, incorporando tecnologias modernas para construção de APIs.
   **RabbitMQ**
    - Sistema de mensagens para implementar a comunicação assíncrona entre componentes do sistema, como notificações que o pagamento foi realizado.
 
+  **MinIO**
+  - Servidor de armazenamento de objetos utilizado para realizar o upload do arquivo CSV.
+
+  **Mockito e JUnit**  
+  - O JUnit foi empregado para estruturar e executar os testes, enquanto o Mockito permitiu a simulação de dependências para garantir o isolamento das unidades de 
+    código testadas.  
+
   **Spring Security**
    - Gerenciamento de autenticação e autorização, garantindo que somente usuários autenticados e com permissões adequadas possam acessar determinadas funcionalidades do sistema.
 
@@ -40,7 +47,6 @@ funcional, incorporando tecnologias modernas para construção de APIs.
   **Spring Cloud Gateway**
    - Configurado para gerenciar todas as requisições dos clientes, funcionando como uma camada de roteamento, autenticação e autorização centralizada.
    - Facilita a comunicação com os microserviços, agregando resultados e melhorando a experiência do cliente.
-
 
   **Eureka (Spring Cloud Netflix)**
    - Serviço de registro e descoberta para facilitar o **load balancing** e o escalonamento horizontal de microserviços, garantindo alta disponibilidade.
