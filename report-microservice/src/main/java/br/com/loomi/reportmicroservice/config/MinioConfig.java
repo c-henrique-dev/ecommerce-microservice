@@ -3,6 +3,8 @@ package br.com.loomi.reportmicroservice.config;
 import io.minio.BucketExistsArgs;
 import io.minio.MakeBucketArgs;
 import io.minio.MinioClient;
+import lombok.extern.slf4j.Slf4j;
+
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -10,6 +12,7 @@ import org.springframework.context.annotation.Configuration;
 import java.util.concurrent.TimeUnit;
 
 @Configuration
+@Slf4j
 public class MinioConfig {
 
     @Value("${minio.bucket}")
@@ -28,7 +31,6 @@ public class MinioConfig {
     public MinioClient minioClient() throws Exception {
         MinioClient client = null;
 
-        // Loop para tentar reconectar até que funcione
         while (client == null) {
             try {
                 client = MinioClient.builder()
@@ -36,7 +38,6 @@ public class MinioConfig {
                         .credentials(accessKey, secretKey)
                         .build();
 
-                // Verificar se o bucket existe, caso contrário criar
                 if (!client.bucketExists(BucketExistsArgs.builder().bucket(bucket).build())) {
                     client.makeBucket(
                             MakeBucketArgs.builder()
@@ -45,10 +46,10 @@ public class MinioConfig {
                     );
                 }
 
-                System.out.println("Conexão bem-sucedida com o MinIO.");
+                log.info("Successful connection to MinIO.");
             } catch (Exception e) {
-                System.err.println("Falha ao conectar-se ao MinIO. Tentando novamente em 3 segundos...");
-                TimeUnit.SECONDS.sleep(3); // Aguardar antes de tentar novamente
+                log.error("Failed to connect to MinIO. Trying again in 3 seconds...");
+                TimeUnit.SECONDS.sleep(3); 
             }
         }
 
