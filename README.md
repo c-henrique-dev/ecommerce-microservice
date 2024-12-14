@@ -9,6 +9,10 @@
 
 # # ecommerce-microservice
 
+## ATENÇÃO  
+
+Algumas rotas estão desprotegidas, pois são utilizadas exclusivamente para a comunicação entre os microserviços. Essas rotas não fazem parte das especificações fornecidas no desafio.  
+
 ## Descrição do Projeto
 
 Este é um projeto de e-commerce desenvolvido em Java utilizando o framework Spring Boot com uma arquitetura de microserviços. O objetivo principal é criar uma aplicação
@@ -54,21 +58,32 @@ funcional, incorporando tecnologias modernas para construção de APIs.
   **Java Mail (Jakarta Mail)**
    - Integração para envio de e-mails, como confirmações de cadastro.
 
+  ## Tela do Eureka exibindo os microserviços registrados e suas instâncias, permitindo monitorar o status dos serviços e realizar balanceamento de carga (load balancing):
 
-## Requisitos
+  ![Captura de tela de 2024-12-13 22-35-09](https://github.com/user-attachments/assets/42ceac65-043c-4e4a-847f-0154ab1d235a)
 
-Para construir e executar o aplicativo você precisa:
+  ## Um dos endpoints do spring boot actuator que retorna informações sobre a quantidade de memória que está sendo utilizada pela JVM:
+  
+  ![Captura de tela de 2024-12-13 23-02-41](https://github.com/user-attachments/assets/fce9f749-f29e-487c-a8d4-49346adbbdd2)
 
-- [JDK 17](https://www.oracle.com/java/technologies/downloads/#java17)
-- [Maven 3](https://maven.apache.org)
-- [Postgres](https://www.postgresql.org/)
+  ## Tela do Swagger do microserviço de clientes:
 
-## Executando a aplicação localmente
+  ![Captura de tela de 2024-12-13 23-05-56](https://github.com/user-attachments/assets/cedd8b15-40e8-4164-bcf1-40f2be063af8)
 
-- Você pode executar a aplicação localmente adaptando o arquivo `application.properties` e executando o comando abaixo:
+  ## Requisitos
+  
+  Para construir e executar o aplicativo você precisa:
+  
+  - [JDK 17](https://www.oracle.com/java/technologies/downloads/#java17)
+  - [Maven 3](https://maven.apache.org)
+  - [Postgres](https://www.postgresql.org/)
 
-```shell
-mvn spring-boot:run
+  ## Executando a aplicação localmente
+  
+  - Você pode executar a aplicação localmente adaptando o arquivo `application.properties` e executando o comando abaixo:
+  
+  ```shell
+  mvn spring-boot:run
 ```
 
 ## Executando a aplicação com docker
