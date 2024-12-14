@@ -1,9 +1,6 @@
 package br.com.loomi.customermicroservice.exceptions.handler;
 
-import br.com.loomi.customermicroservice.exceptions.BadRequestException;
-import br.com.loomi.customermicroservice.exceptions.ErrorResponse;
-import br.com.loomi.customermicroservice.exceptions.InvalidFieldException;
-import br.com.loomi.customermicroservice.exceptions.NotFoundException;
+import br.com.loomi.customermicroservice.exceptions.*;
 import br.com.loomi.customermicroservice.models.dtos.FieldError;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import feign.FeignException;
@@ -24,6 +21,13 @@ public class GlobalExceptionHandler {
     @ResponseStatus(HttpStatus.NOT_FOUND)
     public ErrorResponse handleNotFoundException(
             NotFoundException e) {
+        return ErrorResponse.defaultResponse(e.getMessage());
+    }
+
+    @ExceptionHandler(UnauthorizedException.class)
+    @ResponseStatus(HttpStatus.UNAUTHORIZED)
+    public ErrorResponse handleUnauthorizedException(
+            UnauthorizedException e) {
         return ErrorResponse.defaultResponse(e.getMessage());
     }
 
