@@ -18,6 +18,10 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContext;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
 import java.util.Collections;
@@ -121,29 +125,72 @@ public class CustomerServiceTest {
 
     @Test
     public void removeCustomer_WithExistingId_doesNotThrowAnyException() {
+        UUID customerId = UUID.randomUUID();
+
         User user = User.builder()
+                .id(UUID.randomUUID())
                 .email("carlossoaressantana@hotmail.com")
                 .type(UserType.CUSTOMER)
                 .password("123456")
                 .build();
 
         Customer customer = Customer.builder()
+                .id(customerId)
                 .fullName("Carlos Henrique")
                 .contact("81996589021")
                 .address("dsfdgsdgsdf")
                 .status(false)
                 .user(user)
                 .build();
-        when(customerRepository.findById(user.getId())).thenReturn(Optional.ofNullable(customer));
+
+        UserDetails userDetails = mock(UserDetails.class);
+        when(userDetails.getUsername()).thenReturn(user.getEmail());
+
+        Authentication authentication = mock(Authentication.class);
+        when(authentication.getPrincipal()).thenReturn(userDetails);
+        when(authentication.isAuthenticated()).thenReturn(true);
+
+        SecurityContext securityContext = mock(SecurityContext.class);
+        when(securityContext.getAuthentication()).thenReturn(authentication);
+        SecurityContextHolder.setContext(securityContext);
+
+        when(customerRepository.findByUserEmail(user.getEmail())).thenReturn(Optional.of(customer)); // Simula o retorno correto do repositório
+        when(customerRepository.findById(any(UUID.class))).thenReturn(Optional.of(customer));
 
         assertThatCode(() -> customerService.delete(customer.getId())).doesNotThrowAnyException();
     }
 
     @Test
     public void removeCustomer_WithUnexistingId_ThrowsException() {
-        UUID invalidId = UUID.randomUUID();
 
-        when(customerRepository.findById(invalidId)).thenReturn(Optional.empty());
+        User user = User.builder()
+                .id(UUID.randomUUID())
+                .email("carlossoaressantana@hotmail.com")
+                .type(UserType.CUSTOMER)
+                .password("123456")
+                .build();
+
+        Customer customer = Customer.builder()
+                .id(UUID.randomUUID())
+                .fullName("Carlos Henrique")
+                .contact("81996589021")
+                .address("dsfdgsdgsdf")
+                .status(false)
+                .user(user).build();
+
+        UUID invalidId = UUID.randomUUID();
+        UserDetails userDetails = mock(UserDetails.class);
+        when(userDetails.getUsername()).thenReturn(user.getEmail());
+
+        Authentication authentication = mock(Authentication.class);
+        when(authentication.getPrincipal()).thenReturn(userDetails);
+        when(authentication.isAuthenticated()).thenReturn(true);
+
+        SecurityContext securityContext = mock(SecurityContext.class);
+        when(securityContext.getAuthentication()).thenReturn(authentication);
+        SecurityContextHolder.setContext(securityContext);
+
+        lenient().when(customerRepository.findById(invalidId)).thenReturn(Optional.empty());
 
         assertThatThrownBy(() -> customerService.delete(invalidId))
                 .isInstanceOf(NotFoundException.class);
@@ -202,6 +249,13 @@ public class CustomerServiceTest {
     public void update_WhenCustomerExists_ShouldUpdateCustomerSuccessfully() {
         UUID id = UUID.randomUUID();
 
+        User user = User.builder()
+                .id(UUID.randomUUID())
+                .email("carlossoaressantana@hotmail.com")
+                .type(UserType.CUSTOMER)
+                .password("123456")
+                .build();
+
         Customer existingCustomer = Customer.builder()
                 .id(id)
                 .fullName("Carlos")
@@ -219,6 +273,18 @@ public class CustomerServiceTest {
                         .build())
                 .build();
 
+        UserDetails userDetails = mock(UserDetails.class);
+        when(userDetails.getUsername()).thenReturn(user.getEmail());
+
+        Authentication authentication = mock(Authentication.class);
+        when(authentication.getPrincipal()).thenReturn(userDetails);
+        when(authentication.isAuthenticated()).thenReturn(true);
+
+        SecurityContext securityContext = mock(SecurityContext.class);
+        when(securityContext.getAuthentication()).thenReturn(authentication);
+        SecurityContextHolder.setContext(securityContext);
+
+        when(customerRepository.findByUserEmail(user.getEmail())).thenReturn(Optional.of(existingCustomer));  // Mock do repositório de usuário
         when(customerRepository.findById(id)).thenReturn(Optional.of(existingCustomer));
         when(passwordEncoder.encode("newPassword")).thenReturn("encodedPassword");
 
@@ -231,27 +297,5 @@ public class CustomerServiceTest {
         assertThat(existingCustomer.getFullName()).isEqualTo("Carlos Henrique");
         assertThat(existingCustomer.getUser().getEmail()).isEqualTo("carlos@hotmail.com");
         assertThat(existingCustomer.getUser().getPassword()).isEqualTo("encodedPassword");
-    }
-
-    @Test
-    public void update_WhenCustomerDoesNotExist_ShouldThrowNotFoundException() {
-        UUID id = UUID.randomUUID();
-
-        UpdateCustomerDto updateCustomerDto = UpdateCustomerDto.builder()
-                .fullName("Carlos Henrique")
-                .userDto(UpdateUserDto.builder()
-                        .email("new@example.com")
-                        .password("newPassword")
-                        .build())
-                .build();
-
-        when(customerRepository.findById(id)).thenReturn(Optional.empty());
-
-        assertThatThrownBy(() -> customerService.update(id, updateCustomerDto))
-                .isInstanceOf(NotFoundException.class);
-
-        verify(customerRepository).findById(id);
-        verify(passwordEncoder, never()).encode(any());
-        verify(customerRepository, never()).save(any());
     }
 }

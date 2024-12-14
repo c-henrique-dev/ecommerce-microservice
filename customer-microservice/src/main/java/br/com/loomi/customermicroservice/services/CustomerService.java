@@ -2,6 +2,7 @@ package br.com.loomi.customermicroservice.services;
 
 import br.com.loomi.customermicroservice.exceptions.BadRequestException;
 import br.com.loomi.customermicroservice.exceptions.NotFoundException;
+import br.com.loomi.customermicroservice.exceptions.UnauthorizedException;
 import br.com.loomi.customermicroservice.models.dtos.CustomerDto;
 import br.com.loomi.customermicroservice.models.dtos.UpdateCustomerDto;
 import br.com.loomi.customermicroservice.models.entities.Customer;
@@ -150,6 +151,6 @@ public class CustomerService {
             return this.loadUserByEmail(username);
         }
 
-        throw new RuntimeException("Usuário não autenticado");
+        throw new UnauthorizedException("Unauthenticated user");
     }
 }
