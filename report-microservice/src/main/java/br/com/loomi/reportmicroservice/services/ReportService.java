@@ -75,8 +75,6 @@ public class ReportService {
         } catch (FeignException f) {
             String content = f.contentUTF8();
             String message = content.replaceAll(".*\"message\":\"(.*?)\".*", "$1");
-            System.out.println(f.contentUTF8());
-            System.out.println(f.getMessage());
             throw new NotFoundException(message);
         } catch (Exception e) {
             throw new RuntimeException(e);
