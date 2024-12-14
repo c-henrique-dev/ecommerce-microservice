@@ -6,12 +6,17 @@ import br.com.loomi.customermicroservice.models.dtos.CustomerDto;
 import br.com.loomi.customermicroservice.models.dtos.UpdateCustomerDto;
 import br.com.loomi.customermicroservice.models.entities.Customer;
 import br.com.loomi.customermicroservice.models.entities.User;
+import br.com.loomi.customermicroservice.models.enums.UserType;
 import br.com.loomi.customermicroservice.repositories.CustomerRepository;
 import org.springframework.beans.BeanUtils;
 import org.springframework.data.domain.Example;
 import org.springframework.data.domain.ExampleMatcher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -55,6 +60,12 @@ public class CustomerService {
 
     @Transactional
     public void update(UUID id, UpdateCustomerDto updateCustomerDto) {
+        Customer customer = this.getLoggedUser();
+
+        if (customer.getUser().getType() == UserType.CUSTOMER && !customer.getId().equals(id)) {
+            throw new AccessDeniedException("You do not have permission to edit another user's data");
+        }
+
         this.customerRepository.findById(id)
                 .map(c -> {
                     if (updateCustomerDto.getFullName() != null) {
@@ -89,6 +100,12 @@ public class CustomerService {
 
     @Transactional
     public void delete(UUID id) {
+        Customer customer = this.getLoggedUser();
+
+        if (customer.getUser().getType() == UserType.CUSTOMER && !customer.getId().equals(id)) {
+            throw new AccessDeniedException("You do not have permission to delete another user");
+        }
+
         this.customerRepository
                 .findById(id)
                 .map(p -> {
@@ -114,5 +131,25 @@ public class CustomerService {
     public Customer loadUserByEmail(String email) {
         return this.customerRepository.findByUserEmail(email)
                 .orElseThrow(() -> new NotFoundException("User not found"));
+    }
+
+    public Customer getLoggedUser() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+
+        if (authentication != null && authentication.isAuthenticated()) {
+            Object principal = authentication.getPrincipal();
+
+            String username = null;
+
+            if (principal instanceof UserDetails) {
+                username = ((UserDetails) principal).getUsername();
+            } else {
+                username = principal.toString();
+            }
+
+            return this.loadUserByEmail(username);
+        }
+
+        throw new RuntimeException("Usuário não autenticado");
     }
 }

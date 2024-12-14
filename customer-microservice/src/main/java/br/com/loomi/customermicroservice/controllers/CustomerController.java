@@ -3,9 +3,7 @@ package br.com.loomi.customermicroservice.controllers;
 import br.com.loomi.customermicroservice.models.dtos.CustomerDto;
 import br.com.loomi.customermicroservice.models.dtos.UpdateCustomerDto;
 import br.com.loomi.customermicroservice.models.entities.Customer;
-import br.com.loomi.customermicroservice.models.enums.UserType;
 import br.com.loomi.customermicroservice.services.CustomerService;
-import br.com.loomi.customermicroservice.services.SecurityService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -14,8 +12,6 @@ import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
@@ -27,11 +23,9 @@ import java.util.UUID;
 public class CustomerController {
 
     private CustomerService customerService;
-    private SecurityService securityService;
 
-    public CustomerController(CustomerService customerService, SecurityService securityService) {
+    public CustomerController(CustomerService customerService) {
         this.customerService = customerService;
-        this.securityService = securityService;
     }
 
     @PostMapping
@@ -67,13 +61,6 @@ public class CustomerController {
     @Operation(summary = "Update customer", description = "Updates an existing customer with the provided data.")
     public void update(@PathVariable @Parameter(description = "ID of the customer") UUID id,
                        @RequestBody @Valid UpdateCustomerDto updateCustomerDto) {
-
-        Customer customer = this.securityService.getLoggedUser();
-
-        if (customer.getUser().getType() == UserType.CUSTOMER && !customer.getId().equals(id)) {
-            throw new AccessDeniedException("You do not have permission to edit another user's data");
-        }
-
         this.customerService.update(id, updateCustomerDto);
     }
 
@@ -82,12 +69,6 @@ public class CustomerController {
     @PreAuthorize("hasAnyRole('ADMIN', 'CUSTOMER')")
     @Operation(summary = "Delete customer", description = "Deletes a customer by their ID.")
     public void delete(@PathVariable @Parameter(description = "ID of the customer") UUID id) {
-
-        Customer customer = this.securityService.getLoggedUser();
-
-        if (customer.getUser().getType() == UserType.CUSTOMER && !customer.getId().equals(id)) {
-            throw new AccessDeniedException("You do not have permission to delete another user");
-        }
         this.customerService.delete(id);
     }
 }
