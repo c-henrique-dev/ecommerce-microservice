@@ -69,11 +69,7 @@ public class OrderService {
                 .amount(order.getTotalOfOrder())
                 .build();
 
-        try {
-            this.paymentPublisher.makePayment(paymentDto);
-        } catch (JsonProcessingException e) {
-            throw new RuntimeException(e);
-        }
+        this.paymentPublisher.makePayment(paymentDto);
 
         return orderSaved;
     }

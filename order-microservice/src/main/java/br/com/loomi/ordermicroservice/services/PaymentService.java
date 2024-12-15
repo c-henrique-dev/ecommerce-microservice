@@ -9,7 +9,6 @@ import br.com.loomi.ordermicroservice.models.enums.OrderStatus;
 import br.com.loomi.ordermicroservice.models.enums.PaymentStatus;
 import br.com.loomi.ordermicroservice.queues.PaymentPublisher;
 import br.com.loomi.ordermicroservice.repositories.OrderRepository;
-import com.fasterxml.jackson.core.JsonProcessingException;
 import feign.FeignException;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
@@ -30,7 +29,7 @@ public class PaymentService {
         this.productClient = productClient;
     }
 
-    public ResponseEntity<Map> simulatePayment(UUID orderId, PaymentMethodDto paymentMethodDto) throws JsonProcessingException {
+    public ResponseEntity<Map> simulatePayment(UUID orderId, PaymentMethodDto paymentMethodDto) {
         Order order = orderRepository.findById(orderId).orElseThrow(() -> new NotFoundException("Order not found"));
 
         boolean paymentSuccessful = new Random().nextBoolean();

@@ -17,15 +17,20 @@ public class PaymentPublisher {
         this.paymentQueue = paymentQueue;
     }
 
-    public PaymentDto makePayment(PaymentDto paymentDto) throws JsonProcessingException {
+    public PaymentDto makePayment(PaymentDto paymentDto) {
         var json = convertIntoJson(paymentDto);
         rabbitTemplate.convertAndSend(paymentQueue.getName(), json);
         return paymentDto;
     }
 
-    private String convertIntoJson(PaymentDto paymentDto) throws JsonProcessingException {
+    private String convertIntoJson(PaymentDto paymentDto) {
         ObjectMapper mapper = new ObjectMapper();
-        var json = mapper.writeValueAsString(paymentDto);
+        String json = null;
+        try {
+            json = mapper.writeValueAsString(paymentDto);
+        } catch (JsonProcessingException e) {
+            throw new RuntimeException(e);
+        }
         return json;
     }
 }
