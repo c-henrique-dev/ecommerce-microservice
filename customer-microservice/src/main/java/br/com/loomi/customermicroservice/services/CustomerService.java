@@ -134,6 +134,11 @@ public class CustomerService {
                 .orElseThrow(() -> new NotFoundException("User not found"));
     }
 
+    public Customer findByIdWithUser(UUID id) {
+        return this.customerRepository.findByIdWithUser(id)
+                .orElseThrow(() -> new NotFoundException("User not found"));
+    }
+
     public Customer getLoggedUser() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
 

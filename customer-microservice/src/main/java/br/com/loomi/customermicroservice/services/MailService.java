@@ -31,7 +31,7 @@ public class MailService {
             MimeMessage mimeMessage = javaMailSender.createMimeMessage();
             MimeMessageHelper helper = new MimeMessageHelper(mimeMessage, "UTF-8");
 
-            helper.setTo("carlossoaressantana081@gmail.com");
+            helper.setTo(user.getEmail());
             helper.setSubject("Confirme seu e-mail");
             helper.setText("<p>Clique no link para confirmar seu e-mail: <a href=\"" + confirmationLink + "\">Clique aqui para confirmar</a></p>", true);
 

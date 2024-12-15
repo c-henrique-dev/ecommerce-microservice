@@ -34,6 +34,7 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/customer/{email}").permitAll()
                         .requestMatchers(HttpMethod.GET, "/customer/get/{email}").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/customer/getById/{id}").permitAll()
                         .requestMatchers(HttpMethod.GET, "/customer/mail/confirm").permitAll()
                         .requestMatchers("/actuator/**").permitAll()
                         .anyRequest().authenticated())

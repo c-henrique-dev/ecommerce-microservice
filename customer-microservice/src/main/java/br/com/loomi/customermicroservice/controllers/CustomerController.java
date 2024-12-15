@@ -56,6 +56,13 @@ public class CustomerController {
         return this.customerService.loadUserByEmail(email);
     }
 
+    @GetMapping("getById/{id}")
+    @ResponseStatus(HttpStatus.OK)
+    @Operation(summary = "Get customer by id", description = "Retrieves a customer by their id.")
+    public Customer findUserEmailByCustomerId(@PathVariable @Parameter(description = "Id of the customer") UUID id) {
+        return this.customerService.findByIdWithUser(id);
+    }
+
     @PatchMapping("{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     @PreAuthorize("hasAnyRole('CUSTOMER', 'ADMIN')")
