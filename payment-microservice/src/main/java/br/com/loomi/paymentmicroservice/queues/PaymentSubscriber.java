@@ -26,17 +26,16 @@ public class PaymentSubscriber {
         try {
             var mapper = new ObjectMapper();
             Payment payment = mapper.readValue(payload, Payment.class);
-
             Payment paymentSaved = this.paymentRepository.save(payment);
 
             if (paymentSaved.getStatus() != PaymentStatus.APPROVED) {
-                this.mailService.sendPaymentEmailAsync("Seu pagamento foi recusado! :(",
+                this.mailService.sendPaymentEmailAsync(paymentSaved.getCustomerId(),"Seu pagamento foi recusado! :(",
                         "Informamos que a sua tentativa de pagamento foi recusada. " +
                                 "Solicitamos que verifique os dados do seu cartão, confirme se possui saldo ou " +
                                 "limite disponível e entre em contato com sua instituição financeira para " +
                                 "identificar qualquer bloqueio.");
             } else {
-                this.mailService.sendPaymentEmailAsync("Seu pagamento foi aprovado! :)",
+                this.mailService.sendPaymentEmailAsync(paymentSaved.getCustomerId(),"Seu pagamento foi aprovado! :)",
                         "É com satisfação que informamos que o seu pagamento foi aprovado com sucesso." +
                                 " Agradecemos a confirmação e o processamento foi concluído normalmente.");
             }
