@@ -1,6 +1,6 @@
 package br.com.loomi.authmicroservice.services;
 
-import br.com.loomi.authmicroservice.enums.UserType;
+import br.com.loomi.authmicroservice.models.enums.UserType;
 import br.com.loomi.authmicroservice.models.Customer;
 import br.com.loomi.authmicroservice.models.User;
 import org.junit.jupiter.api.BeforeEach;

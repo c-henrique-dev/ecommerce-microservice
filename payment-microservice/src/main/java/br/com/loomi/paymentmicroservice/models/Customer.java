@@ -1,6 +1,5 @@
-package br.com.loomi.authmicroservice.models;
+package br.com.loomi.paymentmicroservice.models;
 
-import br.com.loomi.authmicroservice.models.enums.UserType;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -13,12 +12,13 @@ import java.util.UUID;
 @AllArgsConstructor
 @Data
 @Builder
-public class User {
+public class Customer {
     private UUID id;
-    private String name;
-    private String email;
-    private String password;
-    private UserType type;
+    private User user;
+    private String fullName;
+    private String contact;
+    private String address;
+    private Boolean status;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 }

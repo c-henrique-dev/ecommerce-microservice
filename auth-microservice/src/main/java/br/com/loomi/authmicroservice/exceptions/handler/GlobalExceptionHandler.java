@@ -1,24 +1,22 @@
 package br.com.loomi.authmicroservice.exceptions.handler;
 
-import br.com.loomi.authmicroservice.exceptions.BadRequestException;
-import br.com.loomi.authmicroservice.exceptions.ErrorResponse;
-import br.com.loomi.authmicroservice.exceptions.InvalidFieldException;
-import br.com.loomi.authmicroservice.exceptions.NotFoundException;
+import br.com.loomi.authmicroservice.exceptions.*;
 import br.com.loomi.authmicroservice.models.dtos.FieldError;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import feign.FeignException;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.AccessDeniedException;
+import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
-
     @ExceptionHandler(NotFoundException.class)
     @ResponseStatus(HttpStatus.NOT_FOUND)
     public ErrorResponse handleNotFoundException(
@@ -66,6 +64,16 @@ public class GlobalExceptionHandler {
     @ResponseStatus(HttpStatus.FORBIDDEN)
     public ErrorResponse handleAccesDeniedException(AccessDeniedException e) {
         return ErrorResponse.defaultResponse(e.getMessage());
+    }
+
+    @ExceptionHandler(MethodArgumentNotValidException.class)
+    @ResponseStatus(HttpStatus.UNPROCESSABLE_ENTITY)
+    public ErrorResponse handleValidationException(MethodArgumentNotValidException ex) {
+        List<FieldError> fieldErrors = ex.getBindingResult().getFieldErrors().stream()
+                .map(error -> new FieldError(error.getField(), error.getDefaultMessage()))
+                .toList();
+
+        return new ErrorResponse("Validation error", fieldErrors);
     }
 
     @ExceptionHandler(RuntimeException.class)

@@ -1,6 +1,6 @@
-package br.com.loomi.authmicroservice.models;
+package br.com.loomi.paymentmicroservice.models;
 
-import br.com.loomi.authmicroservice.models.enums.UserType;
+import br.com.loomi.authmicroservice.enums.UserType;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;

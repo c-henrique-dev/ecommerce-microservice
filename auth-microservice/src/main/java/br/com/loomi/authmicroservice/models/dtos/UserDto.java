@@ -1,6 +1,6 @@
 package br.com.loomi.authmicroservice.models.dtos;
 
-import br.com.loomi.authmicroservice.enums.UserType;
+import br.com.loomi.authmicroservice.models.enums.UserType;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
