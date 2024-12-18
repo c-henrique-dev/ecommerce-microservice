@@ -268,7 +268,6 @@ public class CustomerServiceTest {
         UpdateCustomerDto updateCustomerDto = UpdateCustomerDto.builder()
                 .fullName("Carlos Henrique")
                 .userDto(UpdateUserDto.builder()
-                        .email("carlos@hotmail.com")
                         .password("newPassword")
                         .build())
                 .build();
@@ -295,7 +294,6 @@ public class CustomerServiceTest {
         verify(customerRepository).save(existingCustomer);
 
         assertThat(existingCustomer.getFullName()).isEqualTo("Carlos Henrique");
-        assertThat(existingCustomer.getUser().getEmail()).isEqualTo("carlos@hotmail.com");
         assertThat(existingCustomer.getUser().getPassword()).isEqualTo("encodedPassword");
     }
 }

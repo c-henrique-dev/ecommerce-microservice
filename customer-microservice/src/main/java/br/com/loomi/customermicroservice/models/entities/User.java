@@ -1,6 +1,7 @@
 package br.com.loomi.customermicroservice.models.entities;
 
 import br.com.loomi.customermicroservice.models.enums.UserType;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;

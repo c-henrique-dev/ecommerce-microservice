@@ -59,7 +59,7 @@ public class OrderServiceTest {
                 .id(UUID.randomUUID())
                 .customerId(cart.getCustomerId())
                 .totalOfOrder(cart.getTotal())
-                .orderStatus(OrderStatus.INPREPARATION)
+                .orderStatus(OrderStatus.IN_PREPARATION)
                 .orderItems(cart.getItems().stream().map(item ->
                         OrderItem.builder()
                                 .productId(item.getProductId())
@@ -76,7 +76,7 @@ public class OrderServiceTest {
         assertThat(result).isNotNull();
         assertThat(result.getCustomerId()).isEqualTo(cart.getCustomerId());
         assertThat(result.getTotalOfOrder()).isEqualTo(cart.getTotal());
-        assertThat(result.getOrderStatus()).isEqualTo(OrderStatus.INPREPARATION);
+        assertThat(result.getOrderStatus()).isEqualTo(OrderStatus.IN_PREPARATION);
 
         verify(orderRepository).save(any(Order.class));
     }
@@ -86,7 +86,7 @@ public class OrderServiceTest {
         UUID orderId = UUID.randomUUID();
         Order existingOrder = Order.builder()
                 .id(orderId)
-                .orderStatus(OrderStatus.INPREPARATION)
+                .orderStatus(OrderStatus.IN_PREPARATION)
                 .build();
 
         when(orderRepository.findById(orderId)).thenReturn(Optional.of(existingOrder));

@@ -1,6 +1,7 @@
 package br.com.loomi.customermicroservice.security;
 
-import br.com.loomi.customermicroservice.clients.AuthClient;
+import br.com.loomi.customermicroservice.services.CustomUserDetailsService;
+import br.com.loomi.customermicroservice.services.JwtService;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -9,6 +10,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
@@ -20,7 +22,10 @@ import java.io.IOException;
 public class JwtAuthFilter extends OncePerRequestFilter {
 
     @Autowired
-    private AuthClient authClient;
+    private JwtService jwtService;
+
+    @Autowired
+    private CustomUserDetailsService customUserDetailsService;
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
@@ -28,11 +33,11 @@ public class JwtAuthFilter extends OncePerRequestFilter {
 
         if (authorization != null && authorization.startsWith("Bearer")) {
             String token = authorization.split(" ")[1];
-            String isValid = authClient.validToken(token).getBody();
+            String isValid = jwtService.validToken(token);
 
             if (!isValid.isEmpty()) {
-                String userLogin = this.authClient.validToken(token).getBody();
-                CustomUserDetails user = this.authClient.loadByUsername(userLogin).getBody();
+                String userLogin = this.jwtService.validToken(token);
+                UserDetails user = this.customUserDetailsService.loadUserByUsername(userLogin);
                 UsernamePasswordAuthenticationToken userPassword = new UsernamePasswordAuthenticationToken(user, null, user.getAuthorities());
                 userPassword.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
                 SecurityContextHolder.getContext().setAuthentication(userPassword);

@@ -6,6 +6,7 @@ import br.com.loomi.ordermicroservice.models.entities.Order;
 import br.com.loomi.ordermicroservice.models.enums.OrderStatus;
 import br.com.loomi.ordermicroservice.services.CartService;
 import br.com.loomi.ordermicroservice.services.OrderService;
+import io.swagger.v3.oas.annotations.Hidden;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -43,6 +44,7 @@ public class OrderController {
             @PathVariable UUID customerId) {
 
         Cart cart = cartService.getCart(customerId);
+
         if (cart.getItems().isEmpty()) {
             return ResponseEntity.badRequest().body(null);
         }
@@ -81,6 +83,7 @@ public class OrderController {
     }
 
     @GetMapping("/period")
+    @Hidden
     @ResponseStatus(HttpStatus.OK)
     public List<OrderWithProductDTO> getOrdersByPeriod(@RequestParam("initialDate") LocalDate initialDate,
                                                        @RequestParam("endDate") LocalDate endDate) {

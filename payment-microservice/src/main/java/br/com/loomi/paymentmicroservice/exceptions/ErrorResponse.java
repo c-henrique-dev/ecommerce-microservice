@@ -1,6 +1,6 @@
 package br.com.loomi.paymentmicroservice.exceptions;
 
-import br.com.loomi.paymentmicroservice.models.FieldError;
+import br.com.loomi.paymentmicroservice.models.dtos.FieldError;
 
 import java.util.List;
 

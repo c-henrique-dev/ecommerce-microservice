@@ -28,12 +28,12 @@ public class CartController {
     )
     @GetMapping("/{customerId}")
     @PreAuthorize("hasAnyRole('CUSTOMER', 'ADMIN')")
-    public ResponseEntity<Cart> getCart(
+    public Cart getCart(
             @Parameter(description = "Customer ID to retrieve the shopping cart", required = true)
             @PathVariable UUID customerId) {
 
-        Cart cart = cartService.getCart(customerId);
-        return ResponseEntity.ok(cart);
+
+        return cartService.getCart(customerId);
     }
 
     @Operation(

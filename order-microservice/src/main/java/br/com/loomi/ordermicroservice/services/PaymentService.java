@@ -35,7 +35,7 @@ public class PaymentService {
         boolean paymentSuccessful = new Random().nextBoolean();
 
         if (paymentSuccessful) {
-            order.setOrderStatus(OrderStatus.RECEIVED);
+            order.setOrderStatus(OrderStatus.IN_PREPARATION);
             orderRepository.save(order);
             PaymentDto paymentDto = PaymentDto.builder()
                     .customerId(order.getCustomerId())

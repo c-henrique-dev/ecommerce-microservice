@@ -1,7 +1,9 @@
 package br.com.loomi.ordermicroservice.services;
 
+import br.com.loomi.ordermicroservice.clients.CustomerClient;
 import br.com.loomi.ordermicroservice.clients.ProductClient;
 import br.com.loomi.ordermicroservice.exceptions.BadRequestException;
+import br.com.loomi.ordermicroservice.models.dtos.CustomerDto;
 import br.com.loomi.ordermicroservice.models.dtos.ProductDto;
 import br.com.loomi.ordermicroservice.models.entities.Cart;
 import br.com.loomi.ordermicroservice.models.entities.CartItem;
@@ -17,8 +19,6 @@ import org.springframework.data.redis.core.ValueOperations;
 import org.springframework.http.ResponseEntity;
 
 import java.math.BigDecimal;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -35,6 +35,9 @@ public class CartServiceTest {
     private ProductClient productClient;
 
     @Mock
+    private CustomerClient customerClient;
+
+    @Mock
     private RedisTemplate<String, Cart> redisTemplate;
 
     @Test
@@ -42,6 +45,10 @@ public class CartServiceTest {
         UUID customerId = UUID.randomUUID();
         UUID productId = UUID.randomUUID();
         Integer quantity = 2;
+
+        CustomerDto customerDto = CustomerDto.builder()
+                .id(UUID.randomUUID())
+                .build();
 
         ProductDto productDto = ProductDto.builder()
                 .id(productId)
@@ -53,13 +60,14 @@ public class CartServiceTest {
         String redisKey = "cart:" + customerId;
 
         when(productClient.findById(productId)).thenReturn(ResponseEntity.ok(productDto));
+        when(customerClient.findUserEmailByCustomerId(customerId)).thenReturn(ResponseEntity.ok(customerDto));
 
         RedisTemplate<String, String> redisTemplateMock = mock(RedisTemplate.class);
         ValueOperations<String, String> valueOperationsMock = mock(ValueOperations.class);
         when(redisTemplateMock.opsForValue()).thenReturn(valueOperationsMock);
         when(valueOperationsMock.get(redisKey)).thenReturn(null);
 
-        CartService cartService = new CartService(productClient, redisTemplateMock, new ObjectMapper());
+        CartService cartService = new CartService(productClient, customerClient, redisTemplateMock, new ObjectMapper());
 
         ResponseEntity<Cart> response = cartService.addToCart(customerId, productId, quantity);
 
@@ -79,6 +87,10 @@ public class CartServiceTest {
         UUID productId = UUID.randomUUID();
         Integer requestedQuantity = 5;
 
+        CustomerDto customerDto = CustomerDto.builder()
+                .id(UUID.randomUUID())
+                .build();
+
         ProductDto productDto = ProductDto.builder()
                 .id(productId)
                 .name("Playstation 5")
@@ -87,6 +99,7 @@ public class CartServiceTest {
                 .build();
 
         when(productClient.findById(productId)).thenReturn(ResponseEntity.ok(productDto));
+        when(customerClient.findUserEmailByCustomerId(customerId)).thenReturn(ResponseEntity.ok(customerDto));
 
         assertThatThrownBy(() -> cartService.addToCart(customerId, productId, requestedQuantity))
                 .isInstanceOf(BadRequestException.class)
@@ -105,16 +118,24 @@ public class CartServiceTest {
                 .pricePerUnit(new BigDecimal("5200"))
                 .build();
 
-        Cart cart = Cart.builder()
-                .customerId(customerId)
-                .items(new ArrayList<>(List.of(cartItem)))
+        ProductDto productDto = ProductDto.builder()
+                .id(productId)
+                .name("Playstation 5")
+                .qtd(3)
+                .price(new BigDecimal("5200"))
+                .build();
+
+        CustomerDto customerDto = CustomerDto.builder()
+                .id(UUID.randomUUID())
                 .build();
 
         RedisTemplate<String, String> redisTemplateMock = mock(RedisTemplate.class);
         ValueOperations<String, String> valueOperationsMock = mock(ValueOperations.class);
         when(redisTemplateMock.opsForValue()).thenReturn(valueOperationsMock);
+        when(customerClient.findUserEmailByCustomerId(customerId)).thenReturn(ResponseEntity.ok(customerDto));
+        when(productClient.findById(productId)).thenReturn(ResponseEntity.ok(productDto));
 
-        CartService cartService = new CartService(productClient, redisTemplateMock, new ObjectMapper());
+        CartService cartService = new CartService(productClient, customerClient, redisTemplateMock, new ObjectMapper());
 
         Cart response = cartService.removeItemFromCart(customerId, productId);
 
@@ -127,14 +148,27 @@ public class CartServiceTest {
         UUID customerId = UUID.randomUUID();
         UUID productId = UUID.randomUUID();
 
+        ProductDto productDto = ProductDto.builder()
+                .id(productId)
+                .name("Playstation 5")
+                .qtd(3)
+                .price(new BigDecimal("5200"))
+                .build();
+
+        CustomerDto customerDto = CustomerDto.builder()
+                .id(UUID.randomUUID())
+                .build();
+
         RedisTemplate<String, String> redisTemplateMock = mock(RedisTemplate.class);
         ValueOperations<String, String> valueOperationsMock = mock(ValueOperations.class);
         when(redisTemplateMock.opsForValue()).thenReturn(valueOperationsMock);
+        when(productClient.findById(productId)).thenReturn(ResponseEntity.ok(productDto));
+        when(customerClient.findUserEmailByCustomerId(customerId)).thenReturn(ResponseEntity.ok(customerDto));
 
         String redisKey = "cart:" + customerId;
         when(valueOperationsMock.get(redisKey)).thenReturn(null);
 
-        CartService cartService = new CartService(productClient, redisTemplateMock, new ObjectMapper());
+        CartService cartService = new CartService(productClient, customerClient, redisTemplateMock, new ObjectMapper());
         Cart response = cartService.removeItemFromCart(customerId, productId);
 
         assertThat(response).isNotNull();

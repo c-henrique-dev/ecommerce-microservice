@@ -1,9 +1,9 @@
 package br.com.loomi.ordermicroservice.models.enums;
 
 public enum OrderStatus {
-    INPREPARATION,
+    IN_PREPARATION,
+    AWAITING_PAYMENT,
     RECEIVED,
-    DISPATCHED,
     DELIVERED,
     PAYMENT_REJECTED
 }

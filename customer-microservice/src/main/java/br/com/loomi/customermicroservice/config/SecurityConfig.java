@@ -32,8 +32,10 @@ public class SecurityConfig {
                 .sessionManagement(sess -> sess.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(authorize -> authorize
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/customer").permitAll()
                         .requestMatchers(HttpMethod.GET, "/customer/{email}").permitAll()
                         .requestMatchers(HttpMethod.GET, "/customer/get/{email}").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/userDetails/{email}").permitAll()
                         .requestMatchers(HttpMethod.GET, "/customer/getById/{id}").permitAll()
                         .requestMatchers(HttpMethod.GET, "/customer/mail/confirm").permitAll()
                         .requestMatchers("/actuator/**").permitAll()

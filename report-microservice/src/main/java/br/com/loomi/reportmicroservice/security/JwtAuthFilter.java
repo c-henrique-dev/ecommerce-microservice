@@ -1,6 +1,7 @@
 package br.com.loomi.reportmicroservice.security;
 
-import br.com.loomi.reportmicroservice.clients.AuthClient;
+import br.com.loomi.reportmicroservice.clients.CustomerClient;
+import br.com.loomi.reportmicroservice.services.JwtService;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -20,7 +21,10 @@ import java.io.IOException;
 public class JwtAuthFilter extends OncePerRequestFilter {
 
     @Autowired
-    private AuthClient authClient;
+    private CustomerClient customerClient;
+
+    @Autowired
+    private JwtService jwtService;
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
@@ -28,11 +32,11 @@ public class JwtAuthFilter extends OncePerRequestFilter {
 
         if (authorization != null && authorization.startsWith("Bearer")) {
             String token = authorization.split(" ")[1];
-            String isValid = authClient.validToken(token).getBody();
+            String isValid = jwtService.validToken(token);
 
             if (!isValid.isEmpty()) {
-                String userLogin = authClient.validToken(token).getBody();
-                CustomUserDetails user = authClient.loadByUsername(userLogin).getBody();
+                String userLogin = jwtService.validToken(token);
+                CustomUserDetails user = customerClient.loadByEmail(userLogin).getBody();
                 UsernamePasswordAuthenticationToken userPassword = new UsernamePasswordAuthenticationToken(user, null, user.getAuthorities());
                 userPassword.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
                 SecurityContextHolder.getContext().setAuthentication(userPassword);

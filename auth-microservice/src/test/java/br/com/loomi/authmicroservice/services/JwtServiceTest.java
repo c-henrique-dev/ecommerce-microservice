@@ -1,8 +1,8 @@
 package br.com.loomi.authmicroservice.services;
 
+import br.com.loomi.authmicroservice.models.dtos.UserDto;
 import br.com.loomi.authmicroservice.models.enums.UserType;
-import br.com.loomi.authmicroservice.models.Customer;
-import br.com.loomi.authmicroservice.models.User;
+import br.com.loomi.authmicroservice.models.dtos.CustomerDto;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -32,13 +32,13 @@ public class JwtServiceTest {
 
     @Test
     public void createToken_WithValidData_ReturnsToken() {
-        User user = User.builder()
+        UserDto user = UserDto.builder()
                 .email("carlossoaressantana@hotmail.com")
                 .type(UserType.CUSTOMER)
                 .name("teste")
                 .build();
 
-        Customer customer = Customer.builder()
+        CustomerDto customer = CustomerDto.builder()
                 .fullName("Carlos Henrique")
                 .contact("81996589021")
                 .address("dsfdgsdgsdf")

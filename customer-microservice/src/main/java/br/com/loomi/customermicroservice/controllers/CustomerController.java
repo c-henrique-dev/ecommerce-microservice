@@ -30,7 +30,6 @@ public class CustomerController {
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    @PreAuthorize("hasAnyRole('CUSTOMER', 'ADMIN')")
     @Operation(summary = "Create a new customer", description = "Creates a new customer using the provided data.")
     public Customer save(@RequestBody @Valid CustomerDto customerDto) {
         return this.customerService.save(customerDto);

@@ -14,9 +14,6 @@ import lombok.NoArgsConstructor;
 @Data
 @Builder
 public class UpdateUserDto {
-    @Email(message = "Email must be valid.")
-    private String email;
-
     @Size(min = 8, message = "Password must have at least 8 characters.")
     @Pattern(
             regexp = "^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[@$!%*?&])[A-Za-z\\d@$!%*?&]{8,}$",

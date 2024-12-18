@@ -13,6 +13,7 @@ import br.com.loomi.ordermicroservice.queues.PaymentPublisher;
 import br.com.loomi.ordermicroservice.repositories.OrderRepository;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -35,11 +36,12 @@ public class OrderService {
         this.paymentPublisher = paymentPublisher;
     }
 
+    @Transactional
     public Order createOrderFromCart(Cart cart) {
         Order order = Order.builder()
                 .customerId(cart.getCustomerId())
                 .totalOfOrder(cart.getTotal())
-                .orderStatus(OrderStatus.INPREPARATION)
+                .orderStatus(OrderStatus.AWAITING_PAYMENT)
                 .build();
 
         List<OrderItem> orderItems = cart.getItems().stream().map(item ->
@@ -111,6 +113,7 @@ public class OrderService {
         return orderWithProductDTOs;
     }
 
+    @Transactional
     public void updateOrderStatus(UUID orderId, OrderStatus newStatus) {
         Order order = orderRepository.findById(orderId)
                 .orElseThrow(() -> new NotFoundException("Order not found"));

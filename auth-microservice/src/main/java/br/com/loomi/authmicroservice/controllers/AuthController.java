@@ -5,10 +5,11 @@ import br.com.loomi.authmicroservice.services.AuthService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequestMapping("auth")
@@ -19,26 +20,6 @@ public class AuthController {
 
     public AuthController(AuthService authService) {
         this.authService = authService;
-    }
-
-    @GetMapping("{email}")
-    @ResponseStatus(HttpStatus.OK)
-    @Operation(
-            summary = "Load user by email",
-            description = "Fetches user details based on the provided email."
-    )
-    public UserDetails loadByUsername(@PathVariable String email) {
-        return authService.loadUserDetailByEmail(email);
-    }
-
-    @GetMapping("valid/{token}")
-    @ResponseStatus(HttpStatus.OK)
-    @Operation(
-            summary = "Validate token",
-            description = "Validates the provided authentication token."
-    )
-    public String validToken(@PathVariable String token) {
-        return authService.validToken(token);
     }
 
     @PostMapping

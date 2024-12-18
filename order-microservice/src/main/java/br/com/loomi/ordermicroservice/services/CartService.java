@@ -1,5 +1,6 @@
 package br.com.loomi.ordermicroservice.services;
 
+import br.com.loomi.ordermicroservice.clients.CustomerClient;
 import br.com.loomi.ordermicroservice.clients.ProductClient;
 import br.com.loomi.ordermicroservice.exceptions.BadRequestException;
 import br.com.loomi.ordermicroservice.exceptions.NotFoundException;
@@ -22,14 +23,16 @@ import java.util.concurrent.TimeUnit;
 public class CartService {
 
     private final ProductClient productClient;
+    private final CustomerClient customerClient;
     private final RedisTemplate<String, String> redisTemplate;
     private final ObjectMapper objectMapper;
 
     private static final String CART_KEY_PREFIX = "cart:";
     private static final Logger logger = LoggerFactory.getLogger(CartService.class);
 
-    public CartService(ProductClient productClient, RedisTemplate<String, String> redisTemplate, ObjectMapper objectMapper) {
+    public CartService(ProductClient productClient, CustomerClient customerClient, RedisTemplate<String, String> redisTemplate, ObjectMapper objectMapper) {
         this.productClient = productClient;
+        this.customerClient = customerClient;
         this.redisTemplate = redisTemplate;
         this.objectMapper = objectMapper;
     }
@@ -70,6 +73,7 @@ public class CartService {
     public ResponseEntity<Cart> addToCart(UUID customerId, UUID productId, Integer quantity) {
         try {
             ProductDto product = productClient.findById(productId).getBody();
+            customerClient.findUserEmailByCustomerId(customerId).getBody();
 
             if (product.getQtd() < quantity) {
                 logger.warn("Insufficient stock for productId={} requested quantity={}", productId, quantity);
@@ -88,7 +92,6 @@ public class CartService {
             cart.addItem(item);
 
             saveCartToRedis(customerId, cart);
-            logger.info("Added item to cart: productId={}, quantity={}", productId, quantity);
             return ResponseEntity.ok(cart);
         } catch (FeignException e) {
             String content = e.contentUTF8();
@@ -99,28 +102,42 @@ public class CartService {
     }
 
     public Cart getCart(UUID customerId) {
-        Cart cart = getCartFromRedis(customerId);
-        if (cart != null) {
-            return cart;
+        try {
+            customerClient.findUserEmailByCustomerId(customerId).getBody();
+
+            Cart cart = getCartFromRedis(customerId);
+            if (cart != null) {
+                return cart;
+            }
+
+            return new Cart();
+        } catch (FeignException e) {
+            String content = e.contentUTF8();
+            String message = content.replaceAll(".*\"message\":\"(.*?)\".*", "$1");
+            throw new NotFoundException(message);
         }
-        logger.info("No existing cart found for customerId={}, returning new Cart", customerId);
-        return new Cart();
     }
 
     public Cart removeItemFromCart(UUID customerId, UUID productId) {
-        Cart cart = getCart(customerId);
+        try {
+            customerClient.findUserEmailByCustomerId(customerId).getBody();
+            productClient.findById(productId).getBody();
 
-        if (cart != null) {
-            cart.removeItem(productId);
-            if (cart.getItems().isEmpty()) {
-                redisTemplate.delete(buildRedisKey(customerId));
-                logger.info("Removed all items from Redis for customerId={}", customerId);
-            } else {
-                saveCartToRedis(customerId, cart);
-                logger.info("Removed item from Redis cart: productId={}, customerId={}", productId, customerId);
+            Cart cart = getCart(customerId);
+
+            if (cart != null) {
+                cart.removeItem(productId);
+                if (cart.getItems().isEmpty()) {
+                    redisTemplate.delete(buildRedisKey(customerId));
+                } else {
+                    saveCartToRedis(customerId, cart);
+                }
             }
+            return cart;
+        } catch (FeignException e) {
+            String content = e.contentUTF8();
+            String message = content.replaceAll(".*\"message\":\"(.*?)\".*", "$1");
+            throw new NotFoundException(message);
         }
-
-        return cart;
     }
 }

@@ -40,6 +40,12 @@ public class CustomerService {
     @Transactional
     public Customer save(CustomerDto customerDto) {
         try {
+            boolean emailExists = customerRepository.existsByUserEmail(customerDto.getUserDto().getEmail());
+
+            if (emailExists) {
+                throw new BadRequestException("The e-mail provided is already in use");
+            }
+
             User user = new User();
             BeanUtils.copyProperties(customerDto.getUserDto(), user);
 
@@ -82,9 +88,6 @@ public class CustomerService {
                     }
 
                     if (updateCustomerDto.getUserDto() != null) {
-                        if (updateCustomerDto.getUserDto().getEmail() != null) {
-                            c.getUser().setEmail(updateCustomerDto.getUserDto().getEmail());
-                        }
                         if (updateCustomerDto.getUserDto().getPassword() != null) {
                             c.getUser().setPassword(passwordEncoder.encode(updateCustomerDto.getUserDto().getPassword()));
                         }
@@ -131,12 +134,12 @@ public class CustomerService {
 
     public Customer loadUserByEmail(String email) {
         return this.customerRepository.findByUserEmail(email)
-                .orElseThrow(() -> new NotFoundException("User not found"));
+                .orElseThrow(() -> new NotFoundException("Customer not found"));
     }
 
     public Customer findByIdWithUser(UUID id) {
         return this.customerRepository.findByIdWithUser(id)
-                .orElseThrow(() -> new NotFoundException("User not found"));
+                .orElseThrow(() -> new NotFoundException("Customer not found"));
     }
 
     public Customer getLoggedUser() {

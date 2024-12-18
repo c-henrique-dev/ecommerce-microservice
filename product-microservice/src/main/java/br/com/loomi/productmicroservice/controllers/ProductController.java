@@ -4,6 +4,7 @@ import br.com.loomi.productmicroservice.models.dtos.ProductDto;
 import br.com.loomi.productmicroservice.models.dtos.UpdateProductDto;
 import br.com.loomi.productmicroservice.models.entities.Product;
 import br.com.loomi.productmicroservice.services.ProductService;
+import io.swagger.v3.oas.annotations.Hidden;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -89,6 +90,7 @@ public class ProductController {
 
     @Operation(summary = "Debits the stock of a product")
     @PostMapping("{id}")
+    @Hidden
     public void debitStock(
             @Parameter(description = "Product ID", required = true)
             @PathVariable UUID id,

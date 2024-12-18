@@ -2,8 +2,7 @@ package br.com.loomi.authmicroservice.security;
 
 import br.com.loomi.authmicroservice.clients.CustomerClient;
 import br.com.loomi.authmicroservice.exceptions.NotFoundException;
-import br.com.loomi.authmicroservice.models.Customer;
-import br.com.loomi.authmicroservice.models.User;
+import br.com.loomi.authmicroservice.models.dtos.CustomerDto;
 import br.com.loomi.authmicroservice.models.dtos.UserDto;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -23,12 +22,12 @@ public class CustomUserDetailsService implements UserDetailsService {
     private PasswordEncoder passwordEncoder;
 
     public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {
-        Customer customer = customerClient.loadByEmail(email).getBody();
+        CustomerDto customer = customerClient.loadByEmail(email).getBody();
         if (customer == null || customer.getUser() == null) {
             throw new UsernameNotFoundException("User not found");
         }
 
-        User user = customer.getUser();
+        UserDto user = customer.getUser();
 
         return org.springframework.security.core.userdetails.User.builder()
                 .username(user.getEmail())
@@ -37,7 +36,7 @@ public class CustomUserDetailsService implements UserDetailsService {
                 .build();
     }
 
-    public UserDetails auth(UserDto userDto) {
+    public UserDetails auth(br.com.loomi.authmicroservice.models.dtos.UserDto userDto) {
         UserDetails user = loadUserByUsername(userDto.getEmail());
         boolean passwordMatch = passwordEncoder.matches(userDto.getPassword(), user.getPassword());
         if (passwordMatch) {

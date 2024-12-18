@@ -15,13 +15,12 @@ import org.springframework.web.multipart.MultipartFile;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
-import java.math.RoundingMode;
+import java.text.NumberFormat;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
+import java.util.Locale;
 
 @Service
 public class ReportService {
@@ -38,6 +37,11 @@ public class ReportService {
 
     public ResponseEntity<ResponseDto> generateReport(LocalDate initialDate, LocalDate endDate) throws IOException {
         try {
+            DateTimeFormatter brazilianDateFormatter = DateTimeFormatter.ofPattern("dd/MM/yyyy");
+
+            String formattedInitialDate = initialDate.format(brazilianDateFormatter);
+            String formattedEndDate = endDate.format(brazilianDateFormatter);
+
             List<OrderWithProductDTO> orders = orderClient.getOrdersByPeriod(initialDate, endDate).getBody();
 
             String fileName = "report" + LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd_HHmmss")) + ".csv";
@@ -45,16 +49,18 @@ public class ReportService {
             ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
             OutputStreamWriter writer = new OutputStreamWriter(byteArrayOutputStream);
 
+            NumberFormat currencyFormatter = NumberFormat.getCurrencyInstance(new Locale("pt", "BR"));
+
             writer.write("Product,Qtd,Total,Total Value");
             writer.write("\n");
 
             for (OrderWithProductDTO order : orders) {
                 String productName = order.getProductName();
                 int totalQtd = order.getTotalQtd();
-                String productPrice = order.getProductPrice().setScale(2, RoundingMode.HALF_UP).toString();
-                String totalValor = order.getTotalValor().setScale(2, RoundingMode.HALF_UP).toString();
+                String productPrice = currencyFormatter.format(order.getProductPrice());
+                String totalValor = currencyFormatter.format(order.getTotalValor());
 
-                writer.write(String.format("%s,%d,%s,%s", productName, totalQtd, productPrice, totalValor));
+                writer.write(String.format("\"%s\",%d,\"%s\",\"%s\"", productName, totalQtd, productPrice, totalValor));
                 writer.write("\n");
             }
             writer.flush();
@@ -80,5 +86,4 @@ public class ReportService {
             throw new RuntimeException(e);
         }
     }
-
 }

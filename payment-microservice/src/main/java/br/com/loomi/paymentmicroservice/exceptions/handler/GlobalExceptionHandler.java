@@ -4,7 +4,7 @@ import br.com.loomi.paymentmicroservice.exceptions.BadRequestException;
 import br.com.loomi.paymentmicroservice.exceptions.ErrorResponse;
 import br.com.loomi.paymentmicroservice.exceptions.InvalidFieldException;
 import br.com.loomi.paymentmicroservice.exceptions.NotFoundException;
-import br.com.loomi.paymentmicroservice.models.FieldError;
+import br.com.loomi.paymentmicroservice.models.dtos.FieldError;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import feign.FeignException;
 import org.springframework.http.HttpStatus;

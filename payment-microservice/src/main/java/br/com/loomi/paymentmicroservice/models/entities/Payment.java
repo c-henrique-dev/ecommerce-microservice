@@ -1,4 +1,4 @@
-package br.com.loomi.paymentmicroservice.models;
+package br.com.loomi.paymentmicroservice.models.entities;
 
 import br.com.loomi.paymentmicroservice.models.enums.PaymentStatus;
 import jakarta.persistence.*;

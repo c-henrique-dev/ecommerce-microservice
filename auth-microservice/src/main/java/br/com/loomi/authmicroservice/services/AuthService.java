@@ -3,8 +3,7 @@ package br.com.loomi.authmicroservice.services;
 import br.com.loomi.authmicroservice.clients.CustomerClient;
 import br.com.loomi.authmicroservice.exceptions.BadRequestException;
 import br.com.loomi.authmicroservice.exceptions.NotFoundException;
-import br.com.loomi.authmicroservice.models.Customer;
-import br.com.loomi.authmicroservice.models.User;
+import br.com.loomi.authmicroservice.models.dtos.CustomerDto;
 import br.com.loomi.authmicroservice.models.dtos.AuthDto;
 import br.com.loomi.authmicroservice.models.dtos.TokenDto;
 import br.com.loomi.authmicroservice.models.dtos.UserDto;
@@ -14,9 +13,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
-import org.springframework.web.bind.annotation.PathVariable;
 
 import java.time.Duration;
 
@@ -37,32 +34,15 @@ public class AuthService {
         this.redisTemplate = redisTemplate;
     }
 
-    public Customer loadUserByEmail(String email) {
-        try {
-            return this.customerClient.loadByEmail(email).getBody();
-        } catch (Exception e) {
-            throw new NotFoundException(e.getMessage());
-        }
-    }
-
-    public String validToken(@PathVariable String token) {
-        return jwtService.validToken(token);
-    }
-
-
-    public UserDetails loadUserDetailByEmail(String email) {
-        return this.customUserDetailsService.loadUserByUsername(email);
-    }
-
     public ResponseEntity auth(AuthDto authDto) {
         try {
-            UserDto userDto = new UserDto();
-            User user = User.builder()
+            UserDto userDto = new br.com.loomi.authmicroservice.models.dtos.UserDto();
+            UserDto user = UserDto.builder()
                     .email(authDto.getEmail())
                     .password(authDto.getPassword()).build();
             BeanUtils.copyProperties(user, userDto);
 
-            Customer customer = this.customerClient.loadByEmail(authDto.getEmail()).getBody();
+            CustomerDto customer = this.customerClient.loadByEmail(authDto.getEmail()).getBody();
 
             if (Boolean.FALSE.equals(customer.getStatus())) {
                 throw new BadRequestException("E-mail not validated");

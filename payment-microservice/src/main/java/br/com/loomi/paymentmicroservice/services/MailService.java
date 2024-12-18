@@ -1,7 +1,7 @@
 package br.com.loomi.paymentmicroservice.services;
 
 import br.com.loomi.paymentmicroservice.clients.CustomerClient;
-import br.com.loomi.paymentmicroservice.models.Customer;
+import br.com.loomi.paymentmicroservice.models.dtos.CustomerDto;
 import jakarta.mail.internet.MimeMessage;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
@@ -26,8 +26,7 @@ public class MailService {
         try {
             MimeMessage mimeMessage = javaMailSender.createMimeMessage();
             MimeMessageHelper helper = new MimeMessageHelper(mimeMessage, "UTF-8");
-            Customer customer = this.customerClient.findUserEmailByCustomerId(clientId).getBody();
-
+            CustomerDto customer = this.customerClient.findUserEmailByCustomerId(clientId).getBody();
             helper.setTo(customer.getUser().getEmail());
             helper.setSubject(subject);
             helper.setText(text);

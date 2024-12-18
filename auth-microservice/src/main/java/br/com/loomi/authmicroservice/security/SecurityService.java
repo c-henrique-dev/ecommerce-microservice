@@ -1,7 +1,7 @@
 package br.com.loomi.authmicroservice.security;
 
 import br.com.loomi.authmicroservice.clients.CustomerClient;
-import br.com.loomi.authmicroservice.models.Customer;
+import br.com.loomi.authmicroservice.models.dtos.CustomerDto;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -16,7 +16,7 @@ public class SecurityService {
         this.customerClient = customerClient;
     }
 
-    public Customer getLoggedUser() {
+    public CustomerDto getLoggedUser() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
 
         if (authentication != null && authentication.isAuthenticated()) {

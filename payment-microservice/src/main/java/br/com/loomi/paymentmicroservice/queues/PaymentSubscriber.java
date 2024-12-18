@@ -1,6 +1,6 @@
 package br.com.loomi.paymentmicroservice.queues;
 
-import br.com.loomi.paymentmicroservice.models.Payment;
+import br.com.loomi.paymentmicroservice.models.entities.Payment;
 import br.com.loomi.paymentmicroservice.models.enums.PaymentStatus;
 import br.com.loomi.paymentmicroservice.repositories.PaymentRepository;
 import br.com.loomi.paymentmicroservice.services.MailService;

@@ -1,4 +1,4 @@
-package br.com.loomi.authmicroservice.models;
+package br.com.loomi.authmicroservice.models.dtos;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -12,9 +12,9 @@ import java.util.UUID;
 @AllArgsConstructor
 @Data
 @Builder
-public class Customer {
+public class CustomerDto {
     private UUID id;
-    private User user;
+    private UserDto user;
     private String fullName;
     private String contact;
     private String address;

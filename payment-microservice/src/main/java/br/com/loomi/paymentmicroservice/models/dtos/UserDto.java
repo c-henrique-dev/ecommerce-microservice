@@ -1,4 +1,4 @@
-package br.com.loomi.paymentmicroservice.models;
+package br.com.loomi.paymentmicroservice.models.dtos;
 
 import br.com.loomi.paymentmicroservice.models.enums.UserType;
 import lombok.AllArgsConstructor;
@@ -13,7 +13,7 @@ import java.util.UUID;
 @AllArgsConstructor
 @Data
 @Builder
-public class User {
+public class UserDto {
     private UUID id;
     private String name;
     private String email;

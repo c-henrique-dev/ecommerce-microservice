@@ -1,6 +1,6 @@
 package br.com.loomi.authmicroservice.services;
 
-import br.com.loomi.authmicroservice.models.Customer;
+import br.com.loomi.authmicroservice.models.dtos.CustomerDto;
 import com.auth0.jwt.JWT;
 import com.auth0.jwt.algorithms.Algorithm;
 import com.auth0.jwt.exceptions.JWTCreationException;
@@ -22,7 +22,7 @@ public class JwtService {
     @Value("${security.jwt.key-signature}")
     public String keySignature;
 
-    public String getToken(Customer customer) {
+    public String getToken(CustomerDto customer) {
         try {
             long expString = Long.valueOf(expiration);
             LocalDateTime expiration = LocalDateTime.now().plusHours(expString);

@@ -36,17 +36,17 @@ public class ReportController {
     public ResponseEntity<ResponseDto> generateReport(
             @RequestParam("initialDate")
             @Parameter(
-                    description = "Start date for the report.",
+                    description = "Start date for the report (dd/MM/yyyy).",
                     required = true,
-                    schema = @Schema(type = "string", format = "date", example = "2024-01-01")
+                    schema = @Schema(type = "string", format = "date", example = "01/01/2024")
             )
             LocalDate initialDate,
 
             @RequestParam("endDate")
             @Parameter(
-                    description = "End date for the report.",
+                    description = "End date for the report (dd/MM/yyyy).",
                     required = true,
-                    schema = @Schema(type = "string", format = "date", example = "2024-01-31")
+                    schema = @Schema(type = "string", format = "date", example = "31/01/2024")
             )
             LocalDate endDate) {
         try {
