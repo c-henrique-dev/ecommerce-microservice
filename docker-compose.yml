@@ -1,5 +1,103 @@
 services:
+  customer-microservice-db:
+    profiles:
+      - dev
+      - local
+    image: postgres:15.3
+    volumes:
+      - customer-microservice-db:/var/lib/postgresql/data
+    environment:
+      - POSTGRES_DB=customer-microservice
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+    ports:
+      - 5433:5432
+    networks:
+      - network
+
+  order-microservice-db:
+    profiles:
+      - dev
+      - local
+    image: postgres:15.3
+    volumes:
+      - order-microservice-db:/var/lib/postgresql/data
+    environment:
+      - POSTGRES_DB=order-microservice
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+    ports:
+      - 5434:5432
+    networks:
+      - network
+
+  product-microservice-db:
+    profiles:
+      - dev
+      - local
+    image: postgres:15.3
+    volumes:
+      - product-microservice-db:/var/lib/postgresql/data
+    environment:
+      - POSTGRES_DB=product-microservice
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+    ports:
+      - 5435:5432
+    networks:
+      - network
+
+  report-microservice-db:
+    profiles:
+      - dev
+      - local
+    image: postgres:15.3
+    volumes:
+      - report-microservice-db:/var/lib/postgresql/data
+    environment:
+      - POSTGRES_DB=report-microservice
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+    ports:
+      - 5436:5432
+    networks:
+      - network
+
+  payment-microservice-db:
+    profiles:
+      - dev
+      - local
+    image: postgres:15.3
+    volumes:
+      - payment-microservice-db:/var/lib/postgresql/data
+    environment:
+      - POSTGRES_DB=payment-microservice
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+    ports:
+      - 5437:5432
+    networks:
+      - network
+
+  zipkin:
+    profiles:
+      - test
+      - dev
+      - local
+    image: ghcr.io/openzipkin/zipkin-slim:${TAG:-latest}
+    container_name: zipkin
+    environment:
+      - STORAGE_TYPE=mem
+    ports:
+      - 9411:9411
+    networks:
+      - network
+
   minio:
+    profiles:
+      - test
+      - dev
+      - local
     image: minio/minio:latest
     command: server /data --console-address ":9001"
     environment:
@@ -13,16 +111,26 @@ services:
     volumes:
       - storage:/data
 
-  redis:
-    container_name: redis
-    image: redis
-    command: redis-server
+  redis-caching:
+    profiles:
+      - test
+      - dev
+      - local
+    container_name: redis-caching
+    image: redis:latest
+    command: [ "redis-server", "--bind", "redis-caching", "--port", "6379" ]
     ports:
       - "6379:6379"
     volumes:
-    - redis_data:/data
+      - caching:/data
+    networks:
+      - network
 
   rabbitmq:
+    profiles:
+      - test
+      - dev
+      - local
     image: rabbitmq:3.11-management
     container_name: rabbitmqq
     environment:
@@ -32,9 +140,14 @@ services:
       - "5672:5672"
       - "15672:15672"
     volumes:
-      - rabbitmq_data:/var/lib/rabbitmq
+      - messaging:/var/lib/rabbitmq
+    networks:
+      - network
 
   eureka-server:
+    profiles:
+      - dev
+      - local
     build:
       context: ./eureka-server
       dockerfile: Dockerfile
@@ -47,6 +160,9 @@ services:
       - network
 
   cloud-gateway:
+    profiles:
+      - dev
+      - local
     build:
       context: ./cloud-gateway
       dockerfile: Dockerfile
@@ -60,19 +176,23 @@ services:
       - network
 
   auth-microservice:
+    profiles:
+      - dev
+      - local
     build:
       context: ./auth-microservice
       dockerfile: Dockerfile
     environment:
       # Application
       - SPRING_APPLICATION_NAME=auth-microservice
+      - SPRING_CACHE_TYPE=redis
       # Database
-      - SPRING_DATASOURCE_URL=jdbc:postgresql://192.168.15.108:5432/customer-microservice
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://customer-microservice-db:5432/customer-microservice
       - SPRING_DATASOURCE_DRIVERCLASSNAME=org.postgresql.Driver
       - SPRING_DATASOURCE_USERNAME=postgres
       - SPRING_DATASOURCE_PASSWORD=postgres
       # JPA
-      - SPRING_JPA_DATABASE-PLATFORM=org.hibernate.dialect.PostgreSQLDialect
+      - SPRING_JPA_DATABASE_PLATFORM=org.hibernate.dialect.PostgreSQLDialect
       - SPRING_JPA_PROPERTIES_HIBERNATE_SHOW_SQL=true
       - SPRING_JPA_PROPERTIES_HIBERNATE_FORMAT_SQL=true
       - SPRING_JPA_HIBERNATE_DDL_AUTO=none
@@ -83,20 +203,28 @@ services:
       - EUREKA_INSTANCE_PREFER_IP_ADDRESS=true
       - EUREKA_CLIENT_SERVICE_URL_DEFAULTZONE=http://eureka-user:123456@eureka-server:8761/eureka
       - EUREKA_INSTANCE_INSTANCE_ID=auth-microservice:auth-microservice-344errtd:jkdnkfjndjfff
-      #REDIS
-      - SPRING_REDIS_HOST=redis
+      # Redis
+      - SPRING_REDIS_HOST=redis-caching
       - SPRING_REDIS_PORT=6379
       - SPRING_CACHE_TYPE=redis
       #ACTUATOR
       - MANAGEMENT_ENDPOINTS_WEB_EXPOSURE_INCLUDE=*
       - MANAGEMENT_ENDPOINT_HEALTH_SHOW-DETAILS=always
+       # Zipkin
+      - MANAGEMENT_TRACING_SAMPLING_PROBABILITY=1.0
+      - MANAGEMENT_TRACING_EXCLUDE_PATTERN=/actuator/**
+      - MANAGEMENT_ZIPKIN_TRACING_ENDPOINT=http://zipkin:9411/api/v2/spans
     depends_on:
       - eureka-server
-      - redis
+      - redis-caching
+      - customer-microservice-db
     networks:
       - network
 
   customer-microservice:
+    profiles:
+      - dev
+      - local
     build:
       context: ./customer-microservice
       dockerfile: Dockerfile
@@ -104,15 +232,15 @@ services:
       # Application
       - SPRING_APPLICATION_NAME=customer-microservice
       # Database
-      - SPRING_DATASOURCE_URL=jdbc:postgresql://192.168.15.108:5432/customer-microservice
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://customer-microservice-db:5432/customer-microservice
       - SPRING_DATASOURCE_DRIVERCLASSNAME=org.postgresql.Driver
       - SPRING_DATASOURCE_USERNAME=postgres
       - SPRING_DATASOURCE_PASSWORD=postgres
       # JPA
-      - SPRING_JPA_DATABASE-PLATFORM=org.hibernate.dialect.PostgreSQLDialect
+      - SPRING_JPA_DATABASE_PLATFORM=org.hibernate.dialect.PostgreSQLDialect
       - SPRING_JPA_PROPERTIES_HIBERNATE_SHOW_SQL=true
       - SPRING_JPA_PROPERTIES_HIBERNATE_FORMAT_SQL=true
-      - SPRING_JPA_HIBERNATE_DDL_AUTO=none
+      - SPRING_JPA_HIBERNATE_DDL_AUTO=update
       # Security
       - SECURITY_JWT_EXPIRATION=30
       - SECURITY_JWT_KEY_SIGNATURE=VrAhBEGD0zcsL8T6w3PmYDaFWtcW2vWz1cW57Lk05bSCnDrdYnTbJhGeBZdFufraJUNw0jFvbsmAAngSMYHPeqYH5nj7AeL2
@@ -120,15 +248,23 @@ services:
       - EUREKA_INSTANCE_PREFER_IP_ADDRESS=true
       - EUREKA_CLIENT_SERVICE_URL_DEFAULTZONE=http://eureka-user:123456@eureka-server:8761/eureka
       - EUREKA_INSTANCE_INSTANCE_ID=customer-microservice:customer-microservice-334rt5:ssdf4560io
-      #ACTUATOR
+      # Actuator
       - MANAGEMENT_ENDPOINTS_WEB_EXPOSURE_INCLUDE=*
-      - MANAGEMENT_ENDPOINT_HEALTH_SHOW-DETAILS=always    
+      - MANAGEMENT_ENDPOINT_HEALTH_SHOW-DETAILS=always
+      # Zipkin
+      - MANAGEMENT_TRACING_SAMPLING_PROBABILITY=1.0
+      - MANAGEMENT_TRACING_EXCLUDE_PATTERN=/actuator/**
+      - MANAGEMENT_ZIPKIN_TRACING_ENDPOINT=http://zipkin:9411/api/v2/spans
     depends_on:
       - eureka-server
+      - customer-microservice-db
     networks:
       - network
 
   order-microservice:
+    profiles:
+      - dev
+      - local
     build:
       context: ./order-microservice
       dockerfile: Dockerfile
@@ -136,7 +272,7 @@ services:
       # Application
       - SPRING_APPLICATION_NAME=order-microservice
       # Database
-      - SPRING_DATASOURCE_URL=jdbc:postgresql://192.168.15.108:5432/order-microservice
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://order-microservice-db:5432/order-microservice
       - SPRING_DATASOURCE_DRIVERCLASSNAME=org.postgresql.Driver
       - SPRING_DATASOURCE_USERNAME=postgres
       - SPRING_DATASOURCE_PASSWORD=postgres
@@ -144,7 +280,7 @@ services:
       - SPRING_JPA_DATABASE-PLATFORM=org.hibernate.dialect.PostgreSQLDialect
       - SPRING_JPA_PROPERTIES_HIBERNATE_SHOW_SQL=true
       - SPRING_JPA_PROPERTIES_HIBERNATE_FORMAT_SQL=true
-      - SPRING_JPA_HIBERNATE_DDL_AUTO=none
+      - SPRING_JPA_HIBERNATE_DDL_AUTO=update
       # Security
       - SECURITY_JWT_EXPIRATION=30
       - SECURITY_JWT_KEY_SIGNATURE=VrAhBEGD0zcsL8T6w3PmYDaFWtcW2vWz1cW57Lk05bSCnDrdYnTbJhGeBZdFufraJUNw0jFvbsmAAngSMYHPeqYH5nj7AeL2
@@ -152,20 +288,35 @@ services:
       - EUREKA_INSTANCE_PREFER_IP_ADDRESS=true
       - EUREKA_CLIENT_SERVICE_URL_DEFAULTZONE=http://eureka-user:123456@eureka-server:8761/eureka
       - EUREKA_INSTANCE_INSTANCE_ID=order-microservice:order-microservice-2344ert5:dffg56hjk
-    #REDIS
-      - SPRING_REDIS_HOST=redis
+      # Redis
+      - SPRING_REDIS_HOST=redis-caching
       - SPRING_REDIS_PORT=6379
       - SPRING_CACHE_TYPE=redis
-      #ACTUATOR
+      # Actuator
       - MANAGEMENT_ENDPOINTS_WEB_EXPOSURE_INCLUDE=*
-      - MANAGEMENT_ENDPOINT_HEALTH_SHOW-DETAILS=always    
+      - MANAGEMENT_ENDPOINT_HEALTH_SHOW-DETAILS=always
+      # Zipkin
+      - MANAGEMENT_TRACING_SAMPLING_PROBABILITY=1.0
+      - MANAGEMENT_TRACING_EXCLUDE_PATTERN=/actuator/**
+      - MANAGEMENT_ZIPKIN_TRACING_ENDPOINT=http://zipkin:9411/api/v2/spans
+      # Rabbit
+      - SPRING_RABBITMQ_HOST=rabbitmq
+      - SPRING_RABBITMQ_PORT=5672
+      - SPRING_RABBITMQ_USERNAME=guest
+      - SPRING_RABBITMQ_PASSWORD=guest
+      - MQ_PAYMENT_QUEUE=payment
+
     depends_on:
       - eureka-server
-      - redis
+      - order-microservice-db
+      - redis-caching
     networks:
       - network
 
   product-microservice:
+    profiles:
+      - dev
+      - local
     build:
       context: ./product-microservice
       dockerfile: Dockerfile
@@ -173,7 +324,7 @@ services:
       # Application
       - SPRING_APPLICATION_NAME=product-microservice
       # Database
-      - SPRING_DATASOURCE_URL=jdbc:postgresql://192.168.15.108:5432/product-microservice
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://product-microservice-db:5432/product-microservice
       - SPRING_DATASOURCE_DRIVERCLASSNAME=org.postgresql.Driver
       - SPRING_DATASOURCE_USERNAME=postgres
       - SPRING_DATASOURCE_PASSWORD=postgres
@@ -181,7 +332,7 @@ services:
       - SPRING_JPA_DATABASE-PLATFORM=org.hibernate.dialect.PostgreSQLDialect
       - SPRING_JPA_PROPERTIES_HIBERNATE_SHOW_SQL=true
       - SPRING_JPA_PROPERTIES_HIBERNATE_FORMAT_SQL=true
-      - SPRING_JPA_HIBERNATE_DDL_AUTO=none
+      - SPRING_JPA_HIBERNATE_DDL_AUTO=update
       # Security
       - SECURITY_JWT_EXPIRATION=30
       - SECURITY_JWT_KEY_SIGNATURE=VrAhBEGD0zcsL8T6w3PmYDaFWtcW2vWz1cW57Lk05bSCnDrdYnTbJhGeBZdFufraJUNw0jFvbsmAAngSMYHPeqYH5nj7AeL2
@@ -189,15 +340,23 @@ services:
       - EUREKA_INSTANCE_PREFER_IP_ADDRESS=true
       - EUREKA_CLIENT_SERVICE_URL_DEFAULTZONE=http://eureka-user:123456@eureka-server:8761/eureka
       - EUREKA_INSTANCE_INSTANCE_ID=product-microservice:product-microservice-3445rty:566tyui
-      #ACTUATOR
+      # Actuator
       - MANAGEMENT_ENDPOINTS_WEB_EXPOSURE_INCLUDE=*
       - MANAGEMENT_ENDPOINT_HEALTH_SHOW-DETAILS=always
+      # Zipkin
+      - MANAGEMENT_TRACING_SAMPLING_PROBABILITY=1.0
+      - MANAGEMENT_ZIPKIN_TRACING_ENDPOINT=http://zipkin:9411/api/v2/spans
+      - MANAGEMENT_TRACING_EXCLUDE_PATTERN=/actuator/**
     depends_on:
       - eureka-server
+      - product-microservice-db
     networks:
       - network
 
   report-microservice:
+    profiles:
+      - dev
+      - local
     build:
       context: ./report-microservice
       dockerfile: Dockerfile
@@ -205,7 +364,7 @@ services:
       # Application
       - SPRING_APPLICATION_NAME=report-microservice
       # Database
-      - SPRING_DATASOURCE_URL=jdbc:postgresql://192.168.15.108:5432/report-microservice
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://report-microservice-db:5432/report-microservice
       - SPRING_DATASOURCE_DRIVERCLASSNAME=org.postgresql.Driver
       - SPRING_DATASOURCE_USERNAME=postgres
       - SPRING_DATASOURCE_PASSWORD=postgres
@@ -213,7 +372,7 @@ services:
       - SPRING_JPA_DATABASE-PLATFORM=org.hibernate.dialect.PostgreSQLDialect
       - SPRING_JPA_PROPERTIES_HIBERNATE_SHOW_SQL=true
       - SPRING_JPA_PROPERTIES_HIBERNATE_FORMAT_SQL=true
-      - SPRING_JPA_HIBERNATE_DDL_AUTO=none
+      - SPRING_JPA_HIBERNATE_DDL_AUTO=update
       # Security
       - SECURITY_JWT_EXPIRATION=30
       - SECURITY_JWT_KEY_SIGNATURE=VrAhBEGD0zcsL8T6w3PmYDaFWtcW2vWz1cW57Lk05bSCnDrdYnTbJhGeBZdFufraJUNw0jFvbsmAAngSMYHPeqYH5nj7AeL2
@@ -223,55 +382,80 @@ services:
       - EUREKA_INSTANCE_INSTANCE_ID=report-microservice:report-microservice-344eroip0:fvbbng8jmkl
       # Minio
       - MINIO_URL=http://minio:9000
-      - MINIO_ACCESS_KEY=joPjCflOdTg30mumkddR
-      - MINIO_SECRET_KEY=0ImZXT2fjj95THAqTZWVEIpy0U4kD6cEf2d6QipF
+      - MINIO_ACCESS_KEY=trolVgzedjupMQoHCB9U
+      - MINIO_SECRET_KEY=rHp0YZuMTQ0o5UlmAy0oC1HeJ9nbmzO0xDg1crd5
       - MINIO_BUCKET=report
       - MINIO_PUT_OBJECT_PART_SIZE=5242880
-      #ACTUATOR
+      # Actuator
       - MANAGEMENT_ENDPOINTS_WEB_EXPOSURE_INCLUDE=*
       - MANAGEMENT_ENDPOINT_HEALTH_SHOW-DETAILS=always
+      # Zipkin
+      - MANAGEMENT_TRACING_SAMPLING_PROBABILITY=1.0
+      - MANAGEMENT_ZIPKIN_TRACING_ENDPOINT=http://zipkin:9411/api/v2/spans
+      - MANAGEMENT_TRACING_EXCLUDE_PATTERN=/actuator/**
     depends_on:
       - eureka-server
+      - report-microservice-db
       - minio
     networks:
       - network
 
   payment-microservice:
-      build:
-        context: ./payment-microservice
-        dockerfile: Dockerfile
-      environment:
-        # Application
-        - SPRING_APPLICATION_NAME=payment-microservice
-        # Database
-        - SPRING_DATASOURCE_URL=jdbc:postgresql://192.168.15.108:5432/payment-microservice
-        - SPRING_DATASOURCE_DRIVERCLASSNAME=org.postgresql.Driver
-        - SPRING_DATASOURCE_USERNAME=postgres
-        - SPRING_DATASOURCE_PASSWORD=postgres
-        # JPA
-        - SPRING_JPA_DATABASE-PLATFORM=org.hibernate.dialect.PostgreSQLDialect
-        - SPRING_JPA_PROPERTIES_HIBERNATE_SHOW_SQL=true
-        - SPRING_JPA_PROPERTIES_HIBERNATE_FORMAT_SQL=true
-        - SPRING_JPA_HIBERNATE_DDL_AUTO=none
-        # Security
-        - SECURITY_JWT_EXPIRATION=30
-        - SECURITY_JWT_KEY_SIGNATURE=VrAhBEGD0zcsL8T6w3PmYDaFWtcW2vWz1cW57Lk05bSCnDrdYnTbJhGeBZdFufraJUNw0jFvbsmAAngSMYHPeqYH5nj7AeL2
-        # Eureka
-        - EUREKA_INSTANCE_PREFER_IP_ADDRESS=true
-        - EUREKA_CLIENT_SERVICE_URL_DEFAULTZONE=http://eureka-user:123456@eureka-server:8761/eureka
-        - EUREKA_INSTANCE_INSTANCE_ID=payment-microservice:payment-microservice-dsdseroip0:fvbbng8jmkl
-        #ACTUATOR
-        - MANAGEMENT_ENDPOINTS_WEB_EXPOSURE_INCLUDE=*
-        - MANAGEMENT_ENDPOINT_HEALTH_SHOW-DETAILS=always
-      depends_on:
-        - eureka-server
-        - minio
-      networks:
-        - network
+    profiles:
+      - dev
+      - local
+    build:
+      context: ./payment-microservice
+      dockerfile: Dockerfile
+    environment:
+      # Application
+      - SPRING_APPLICATION_NAME=payment-microservice
+      # Database
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://payment-microservice-db:5432/payment-microservice
+      - SPRING_DATASOURCE_DRIVERCLASSNAME=org.postgresql.Driver
+      - SPRING_DATASOURCE_USERNAME=postgres
+      - SPRING_DATASOURCE_PASSWORD=postgres
+      # JPA
+      - SPRING_JPA_DATABASE-PLATFORM=org.hibernate.dialect.PostgreSQLDialect
+      - SPRING_JPA_PROPERTIES_HIBERNATE_SHOW_SQL=true
+      - SPRING_JPA_PROPERTIES_HIBERNATE_FORMAT_SQL=true
+      - SPRING_JPA_HIBERNATE_DDL_AUTO=update
+      # Security
+      - SECURITY_JWT_EXPIRATION=30
+      - SECURITY_JWT_KEY_SIGNATURE=VrAhBEGD0zcsL8T6w3PmYDaFWtcW2vWz1cW57Lk05bSCnDrdYnTbJhGeBZdFufraJUNw0jFvbsmAAngSMYHPeqYH5nj7AeL2
+      # Eureka
+      - EUREKA_INSTANCE_PREFER_IP_ADDRESS=true
+      - EUREKA_CLIENT_SERVICE_URL_DEFAULTZONE=http://eureka-user:123456@eureka-server:8761/eureka
+      - EUREKA_INSTANCE_INSTANCE_ID=payment-microservice:payment-microservice-dsdseroip0:fvbbng8jmkl
+      # Actuator
+      - MANAGEMENT_ENDPOINTS_WEB_EXPOSURE_INCLUDE=*
+      - MANAGEMENT_ENDPOINT_HEALTH_SHOW-DETAILS=always
+      # Zipkin
+      - MANAGEMENT_TRACING_SAMPLING_PROBABILITY=1.0
+      - MANAGEMENT_TRACING_EXCLUDE_PATTERN=/actuator/**
+      - MANAGEMENT_ZIPKIN_TRACING_ENDPOINT=http://zipkin:9411/api/v2/spans
+      # Rabbit
+      - SPRING_RABBITMQ_HOST=rabbitmq
+      - SPRING_RABBITMQ_PORT=5672
+      - SPRING_RABBITMQ_USERNAME=guest
+      - SPRING_RABBITMQ_PASSWORD=guest
+      - MQ_PAYMENT_QUEUE=payment
+    depends_on:
+      - eureka-server
+      - minio
+      - payment-microservice-db
+    networks:
+      - network
 
 networks:
   network:
+    driver: bridge
 volumes:
+  customer-microservice-db:
+  product-microservice-db:
+  order-microservice-db:
+  report-microservice-db:
+  payment-microservice-db:
   storage:
-  rabbitmq_data:
-  redis_data:
+  messaging:
+  caching:

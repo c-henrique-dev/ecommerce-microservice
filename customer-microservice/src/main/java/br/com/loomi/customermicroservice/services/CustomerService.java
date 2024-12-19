@@ -39,30 +39,27 @@ public class CustomerService {
 
     @Transactional
     public Customer save(CustomerDto customerDto) {
-        try {
-            boolean emailExists = customerRepository.existsByUserEmail(customerDto.getUserDto().getEmail());
+        boolean emailExists = customerRepository.existsByUserEmail(customerDto.getUserDto().getEmail());
 
-            if (emailExists) {
-                throw new BadRequestException("The e-mail provided is already in use");
-            }
-
-            User user = new User();
-            BeanUtils.copyProperties(customerDto.getUserDto(), user);
-
-            Customer customer = new Customer();
-            BeanUtils.copyProperties(customerDto, customer);
-            customer.setUser(user);
-            customer.setStatus(false);
-            customer.getUser().setPassword(passwordEncoder.encode(customerDto.getUserDto().getPassword()));
-
-            Customer customerSaved = customerRepository.save(customer);
-
-            this.mailService.sendConfirmationEmailAsync(user);
-
-            return customerSaved;
-        } catch (Exception e) {
-            throw new BadRequestException(e.getMessage());
+        if (emailExists) {
+            throw new BadRequestException("The e-mail provided is already in use");
         }
+
+        User user = new User();
+        BeanUtils.copyProperties(customerDto.getUserDto(), user);
+
+        Customer customer = new Customer();
+        BeanUtils.copyProperties(customerDto, customer);
+        customer.setUser(user);
+        customer.setStatus(false);
+        customer.getUser().setPassword(passwordEncoder.encode(customerDto.getUserDto().getPassword()));
+
+        Customer customerSaved = customerRepository.save(customer);
+
+        this.mailService.sendConfirmationEmailAsync(user);
+        customerSaved.getUser().setPassword(null);
+
+        return customerSaved;
     }
 
     @Transactional
@@ -129,7 +126,11 @@ public class CustomerService {
         Example<Customer> example = Example.of(filter, matcher);
         Page<Customer> customers = customerRepository.findAll(example, pageable);
 
-        return customers;
+        return customers.map(customer -> {
+            customer.getUser().setPassword(null);
+            return customer;
+        });
+
     }
 
     public Customer loadUserByEmail(String email) {
