@@ -55,10 +55,8 @@ public class CustomerService {
         customer.getUser().setPassword(passwordEncoder.encode(customerDto.getUserDto().getPassword()));
 
         Customer customerSaved = customerRepository.save(customer);
-
-        if (customerSaved != null) {
-            this.mailService.sendConfirmationEmailAsync(user);
-        }
+           
+        this.mailService.sendConfirmationEmailAsync(user);
 
         return customerSaved;
     }
