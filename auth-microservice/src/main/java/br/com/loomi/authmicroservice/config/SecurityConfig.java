@@ -32,8 +32,7 @@ public class SecurityConfig {
                 .authorizeHttpRequests(authorize -> authorize
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                         .requestMatchers(HttpMethod.POST, "/auth").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/auth/{email}").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/auth/valid/{token}").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/auth/port").permitAll()
                         .requestMatchers("/actuator/**").permitAll()
                         .anyRequest().authenticated())
                 .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class)

@@ -56,8 +56,9 @@ public class CustomerService {
 
         Customer customerSaved = customerRepository.save(customer);
 
-        this.mailService.sendConfirmationEmailAsync(user);
-        customerSaved.getUser().setPassword(null);
+        if (customerSaved != null) {
+            this.mailService.sendConfirmationEmailAsync(user);
+        }
 
         return customerSaved;
     }
@@ -97,7 +98,6 @@ public class CustomerService {
                     return c;
                 }).orElseThrow(() -> new NotFoundException("Customer not found"));
     }
-
 
     @Transactional
     public void delete(UUID id) {

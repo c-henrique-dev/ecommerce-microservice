@@ -198,15 +198,23 @@ public class CustomerServiceTest {
 
     @Test
     public void listCustomers_ReturnsAllCustomers() throws Exception {
+        User user1 = User.builder()
+                .id(UUID.randomUUID())
+                .email("carlos@hotmail.com")
+                .password("123456")
+                .build();
+
         Customer customer1 = Customer.builder()
                 .id(UUID.randomUUID())
                 .fullName("Carlos Henrique")
+                .user(user1)
                 .contact("81996589021")
                 .build();
 
         Customer customer2 = Customer.builder()
                 .id(UUID.randomUUID())
                 .fullName("Henrique Carlos")
+                .user(user1)
                 .contact("81996589022")
                 .build();
 

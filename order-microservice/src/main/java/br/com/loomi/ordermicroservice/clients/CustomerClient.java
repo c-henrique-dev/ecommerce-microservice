@@ -12,9 +12,11 @@ import java.util.UUID;
 @FeignClient(name = "customer-microservice")
 public interface CustomerClient {
     @GetMapping(path = "userDetails/{email}")
-    ResponseEntity<CustomUserDetails> loadByEmail(@PathVariable("email") String email);
+    ResponseEntity<CustomUserDetails> loadUserByUsername(@PathVariable("email") String email);
 
     @GetMapping(path = "customer/getById/{id}")
     ResponseEntity<CustomerDto> findUserEmailByCustomerId(@PathVariable("id") UUID id);
 
+    @GetMapping(path = "customer/get/{email}")
+    ResponseEntity<CustomerDto> loadByEmail(@PathVariable("email") String email);
 }

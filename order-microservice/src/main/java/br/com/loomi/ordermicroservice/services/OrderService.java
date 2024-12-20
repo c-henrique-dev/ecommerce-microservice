@@ -1,7 +1,10 @@
 package br.com.loomi.ordermicroservice.services;
 
+import br.com.loomi.ordermicroservice.clients.CustomerClient;
 import br.com.loomi.ordermicroservice.clients.ProductClient;
 import br.com.loomi.ordermicroservice.exceptions.NotFoundException;
+import br.com.loomi.ordermicroservice.exceptions.UnauthorizedException;
+import br.com.loomi.ordermicroservice.models.dtos.CustomerDto;
 import br.com.loomi.ordermicroservice.models.dtos.OrderWithProductDTO;
 import br.com.loomi.ordermicroservice.models.dtos.PaymentDto;
 import br.com.loomi.ordermicroservice.models.dtos.ProductDto;
@@ -9,9 +12,14 @@ import br.com.loomi.ordermicroservice.models.entities.Cart;
 import br.com.loomi.ordermicroservice.models.entities.Order;
 import br.com.loomi.ordermicroservice.models.entities.OrderItem;
 import br.com.loomi.ordermicroservice.models.enums.OrderStatus;
+import br.com.loomi.ordermicroservice.models.enums.UserType;
 import br.com.loomi.ordermicroservice.queues.PaymentPublisher;
 import br.com.loomi.ordermicroservice.repositories.OrderRepository;
-import com.fasterxml.jackson.core.JsonProcessingException;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -26,11 +34,13 @@ public class OrderService {
 
     private OrderRepository orderRepository;
     private ProductClient productClient;
+    private CustomerClient customerClient;
     private CartService cartService;
     private PaymentPublisher paymentPublisher;
 
-    public OrderService(ProductClient productClient, OrderRepository orderRepository, CartService cartService, PaymentPublisher paymentPublisher) {
+    public OrderService(ProductClient productClient, CustomerClient customerClient, OrderRepository orderRepository, CartService cartService, PaymentPublisher paymentPublisher) {
         this.orderRepository = orderRepository;
+        this.customerClient = customerClient;
         this.productClient = productClient;
         this.cartService = cartService;
         this.paymentPublisher = paymentPublisher;
@@ -124,5 +134,40 @@ public class OrderService {
 
         order.setOrderStatus(newStatus);
         this.orderRepository.save(order);
+    }
+
+    public Page<Order> find(Pageable pageable) throws Exception {
+        CustomerDto customer = this.getLoggedUser();
+
+        if (customer.getUser().getType() == UserType.CUSTOMER) {
+            return orderRepository.findByCustomerId(customer.getId(), pageable);
+        }
+
+        if (customer.getUser().getType() == UserType.ADMIN) {
+            return orderRepository.findAll(pageable);
+        }
+
+        Page<Order> orders = orderRepository.findAll(pageable);
+        return orders;
+    }
+
+    public CustomerDto getLoggedUser() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+
+        if (authentication != null && authentication.isAuthenticated()) {
+            Object principal = authentication.getPrincipal();
+
+            String username = null;
+
+            if (principal instanceof UserDetails) {
+                username = ((UserDetails) principal).getUsername();
+            } else {
+                username = principal.toString();
+            }
+
+            return this.customerClient.loadByEmail(username).getBody();
+        }
+
+        throw new UnauthorizedException("Unauthenticated user");
     }
 }

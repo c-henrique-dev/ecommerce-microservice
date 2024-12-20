@@ -10,6 +10,9 @@ import io.swagger.v3.oas.annotations.Hidden;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import org.springdoc.core.annotations.ParameterObject;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -80,6 +83,16 @@ public class OrderController {
             @Parameter(description = "New status to be set for the order", required = true)
             @RequestParam OrderStatus newStatus) {
         this.orderService.updateOrderStatus(orderId, newStatus);
+    }
+
+    @GetMapping
+    @ResponseStatus(HttpStatus.OK)
+    @PreAuthorize("hasAnyRole('CUSTOMER', 'ADMIN')")
+    @Operation(summary = "Find orders", description = "Retrieves a paginated list of orders.")
+    public Page<Order> find(
+            @ParameterObject Pageable pageable
+    ) throws Exception {
+        return this.orderService.find(pageable);
     }
 
     @GetMapping("/period")
